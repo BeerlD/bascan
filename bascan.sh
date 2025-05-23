@@ -29,32 +29,18 @@ source ./lib/colors.sh
 source ./modules/cache.sh
 source ./tools/nmap.sh
 
-# ======== PACKGES
-packages_to_install=("toilet" "nmap" "python3-httpx" "nikto")
-
-for package in "${packages_to_install[@]}"; do
-    echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}$package${NC}... "
-
-    if ! sudo apt install -y "$package" > /dev/null 2>&1; then
-        echo -e "${RED}Error${NC}."
-        close
-    else
-        echo -e "${GREEN}Done${NC}."
-    fi
-done
-
-sleep 3
-
 # ======== HEADER
 exit_alt_screen
 enter_alt_screen
 
 echo -e "${RED}$(toilet -f big BASCAN)${NC}"
 cache_folder_create
+history -r
 
 while true; do
     read -e -p "$(echo -e "${BLUE}>${NC} ")" userInput
     lowerUserInput="${userInput,,}"
+    echo ""
 
     if [[ "${#userInput}" -eq 0 ]]; then
         continue
@@ -71,9 +57,11 @@ while true; do
     fi
 
     if [[ "$lowerUserInput" == "check" || "$lowerUserInput" =~ ^check\  ]]; then
-        if [[ "${#userInput}" -ge 6 && "${lowerUserInput:6}" =~ ^ports ]]; then
-            nmap_start_scan "$1"
-            continue
+        if [[ "${#userInput}" -ge 6 ]]; then
+            if [[ "${lowerUserInput:6}" == "ports" ]]; then
+                nmap_start_scan "$1"
+                continue
+            fi
         fi
 
         if [[ "$lowerUserInput" != "check" ]]; then
@@ -84,6 +72,38 @@ while true; do
         echo -e "Operations:"
         echo -e "\tports - check ports vulnerabilities"
         echo -e "\tsubdomains - check subdomains vulnerabilities"
+        echo -e ""
+        continue
+    fi
+
+    if [[ "$lowerUserInput" == "install" || "$lowerUserInput" =~ ^install\  ]]; then
+        if [[ "${#userInput}" -ge 8 ]]; then
+            if [[ "${lowerUserInput:8}" == "all" ]]; then
+                packages_to_install=("toilet" "nmap" "python3-httpx" "nikto" "kighjas723a")
+
+                for package in "${packages_to_install[@]}"; do
+                    echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}$package${NC}... "
+
+                    if ! sudo apt install -y "$package" > /dev/null 2>&1; then
+                        echo -e "${RED}Error${NC}."
+                    else
+                        echo -e "${GREEN}Done${NC}."
+                    fi
+                done
+
+                sleep 3
+                continue
+            fi
+        fi
+
+        if [[ "$lowerUserInput" != "install" ]]; then
+           echo -e "${RED}ERROR${NC} Invalid package: '${userInput:8}'."
+        fi
+
+        echo -e "\nUsage: install <package>"
+        echo -e "Packages:"
+        echo -e "\tall - install all packages"
+        echo -e "\tnmap - install port scanner"
         echo -e ""
         continue
     fi
