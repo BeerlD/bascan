@@ -8,3 +8,26 @@ function cache_folder_create() {
     fi
 }
 
+function cache_tools_file_create() {
+    # $1 -> folder name
+    # $2 -> file name
+
+    cache_folder_create
+    source ./bascan_configs.sh
+
+    cd "$main_folder/$tools_cache_folder"
+    mkdir -p "$1"
+    cd "$1"
+
+    echo "" > "$2"
+    cd ../../../
+}
+
+function cache_tools_file_getPath() {
+    # $1 -> folder name
+    # $2 -> file name
+
+    if [[ -d "$main_folder/$tools_cache_folder/$1" && -f "$main_folder/$tools_cache_folder/$1/$2" ]]; then
+        echo "$main_folder/$tools_cache_folder/$1/$2"
+    fi
+}
