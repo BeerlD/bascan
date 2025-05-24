@@ -12,9 +12,12 @@ function exit_alt_screen() {
 }
   
 function close() {
+    stty echo icanon
+    tput cnorm
     exit_alt_screen
 
     if [[ "$#" -ge 1 && "$1" -eq 1 ]]; then
+    
         exec "$0" "$@"
     fi
 
@@ -33,7 +36,11 @@ if [ $# -eq 0 ]; then
     close
 fi
 
+chmod +x scripts/nmap.sh
+chmod +x scripts/expect/nmap.exp
 chmod +x scripts/pidstat.sh
+
+trap 'stty echo icanon; tput cnorm; exit' INT TERM
 
 # ======== HEADER
 exit_alt_screen
@@ -43,7 +50,12 @@ echo -e "${RED}$(toilet -f big BASCAN)${NC}"
 cache_folder_create
 
 while true; do
+    stty echo icanon
+    tput cnorm
     read -p "$(echo -e "${BLUE}>${NC} ")" userInput
+    stty -echo -icanon
+    tput civis
+
     lowerUserInput="${userInput,,}"
 
     if [[ "${#userInput}" -eq 0 ]]; then
@@ -89,7 +101,7 @@ while true; do
     if [[ "$lowerUserInput" == "install" || "$lowerUserInput" =~ ^install\  ]]; then
         if [[ "${#userInput}" -ge 8 ]]; then
             if [[ "${lowerUserInput:8}" == "all" ]]; then
-                packages_to_install=("toilet" "nmap" "python3-httpx" "nikto")
+                packages_to_install=("toilet" "nmap" "python3-httpx" "nikto" "python3")
 
                 for package in "${packages_to_install[@]}"; do
                     echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}$package${NC}... "

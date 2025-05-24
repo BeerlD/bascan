@@ -1,0 +1,9 @@
+# to install rustscan
+apt install cargo
+cargo install rustscan
+
+
+apt install python3
+pip install scanless --user --break-system-packages
+
+ scanless -s viewdns -t certinia.com

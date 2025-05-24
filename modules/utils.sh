@@ -7,9 +7,9 @@ utils_message_loading_pid() {
     while ps -p "$1" > /dev/null 2>&1; do
         if [[ "${#}" -eq 3 ]]; then
             func=$3
-            echo -ne "$2 [${chars[$charIndex]}] $($func $1)\r"
+            echo -ne "\r$2 [${chars[$charIndex]}] $($func $1)$(tput el)"
         else
-            echo -ne "$2 [${chars[$charIndex]}]\r"
+            echo -ne "\r$2 [${chars[$charIndex]}]$(tput el)"
         fi
         
         ((charIndex++))
@@ -20,5 +20,5 @@ utils_message_loading_pid() {
         fi
     done
 
-    echo -ne "\r$2"
+    echo -ne "\r$2$(tput el)"
 }
