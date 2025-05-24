@@ -30,14 +30,13 @@ enter_alt_screen
 source ./lib/colors.sh
 source ./modules/cache.sh
 source ./tools/nmap.sh
+source ./tools/scanless.sh
 
 if [ $# -eq 0 ]; then
     echo -e "${RED}[-]${NC} No host avaliable."
     close
 fi
 
-chmod +x scripts/nmap.sh
-chmod +x scripts/expect/nmap.exp
 chmod +x scripts/pidstat.sh
 
 trap 'stty echo icanon; tput cnorm; exit' INT TERM
@@ -53,6 +52,7 @@ while true; do
     stty echo icanon
     tput cnorm
     read -p "$(echo -e "${BLUE}>${NC} ")" userInput
+    userInput=$(echo "$userInput" | tr -cd '[:alnum:] ')
     stty -echo -icanon
     tput civis
 
@@ -81,7 +81,8 @@ while true; do
     if [[ "$lowerUserInput" == "scan" || "$lowerUserInput" =~ ^scan\  ]]; then
         if [[ "${#userInput}" -ge 5 ]]; then
             if [[ "${lowerUserInput:5}" == "ports" ]]; then
-                nmap_start_scan "$1"
+                scanless_start_scan
+                nmap_start_scan
                 continue
             fi
         fi
@@ -91,30 +92,68 @@ while true; do
         fi
         
         echo -e "\nUsage: scan <operation>"
-        echo -e "  Operations:"
-        echo -e "    ports - scan ports vulnerabilities"
-        echo -e "    subdomains - scan subdomains vulnerabilities"
-        echo -e ""
+        echo "  Operations:"
+        echo "    ports - scan ports vulnerabilities"
+        echo "    subdomains - scan subdomains vulnerabilities"
+        echo ""
         continue
     fi
 
     if [[ "$lowerUserInput" == "install" || "$lowerUserInput" =~ ^install\  ]]; then
         if [[ "${#userInput}" -ge 8 ]]; then
-            if [[ "${lowerUserInput:8}" == "all" ]]; then
-                packages_to_install=("toilet" "nmap" "python3-httpx" "nikto" "python3")
+            packages_to_install=("python3" "python3-httpx" "toilet" "nmap" "nikto")
+            package_selected="${lowerUserInput:8}"
+            findedPackage=0
 
+            if [[ $package_selected == "all" ]]; then
                 for package in "${packages_to_install[@]}"; do
                     echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}$package${NC}... "
 
                     if ! sudo apt install -y "$package" > /dev/null 2>&1; then
                         echo -e "${RED}Error${NC}."
-                    else
+                        continue
+                    fi
+
+                    echo -e "${GREEN}Done${NC}."
+                done
+
+                findedPackage=1
+            fi
+
+            if [[ $package_selected == "scanless" || $package_selected == "all" ]]; then
+                echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}scanless${NC}... "
+
+                if ! sudo apt install -y "python3" > /dev/null 2>&1; then
+                    echo -e "${RED}Error${NC}."
+                elif ! pip install scanless --user --break-system-packages > /dev/null 2>&1; then
+                    echo -e "${RED}Error${NC}."
+                else
+                    echo -e "${GREEN}Done${NC}."
+                fi
+
+                findedPackage=1
+            fi
+            
+            if [[ $findedPackage -eq 0 ]]; then
+                for package in "${packages_to_install[@]}"; do
+                    if [[ $package == $package_selected ]]; then
+                        findedPackage=1
+                        echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}$package${NC}... "
+
+                        if ! sudo apt install -y "$package" > /dev/null 2>&1; then
+                            echo -e "${RED}Error${NC}."
+                            break
+                        fi
+
                         echo -e "${GREEN}Done${NC}."
+                        break
                     fi
                 done
-                
-                echo ""
-                sleep 3
+            fi
+
+            echo ""
+
+            if [[ $findedPackage -eq 1 ]]; then
                 continue
             fi
         fi
@@ -123,10 +162,11 @@ while true; do
            echo -e "${RED}ERROR${NC} Invalid package: '${userInput:8}'."
         fi
 
-        echo "\nUsage: install <package>"
+        echo -e "\nUsage: install <package>"
         echo "  Packages:"
-        echo "    all - install all packages"
-        echo "    nmap - install port scanner"
+        echo "    all - Install all packages."
+        echo "    nmap - Network scanner, identifier of active hosts, open ports, services and operating systems."
+        echo "    scanless - Anonymous scanning via online services."
         echo ""
         continue
     fi
@@ -166,7 +206,7 @@ while true; do
                     fi
                 fi
 
-                echo "\nUsage: option set <option> <value>"
+                echo -e "\nUsage: option set <option> <value>"
                 echo "Options:"
                 echo "  intensity"
                 echo "    * slowly     - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS." # -T0
@@ -188,7 +228,7 @@ while true; do
             continue
         fi
 
-        echo "\nUsage: option <operation> [...]"
+        echo -e "\nUsage: option <operation> [...]"
         echo "  Operations:"
         echo "    set <option> <value> - set an option value"
         echo "    show - show options"
