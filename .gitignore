@@ -1,6 +1,7 @@
 bascan*/
+bin/
+!res/*
+
 bascan_configs.sh
 *.sh.bak
 *.log
-
-!res/*

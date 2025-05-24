@@ -34,6 +34,7 @@ source ./tools/scanless.sh
 
 if [ $# -eq 0 ]; then
     echo -e "${RED}[-]${NC} No host avaliable."
+    sleep 3
     close
 fi
 
