@@ -12,22 +12,28 @@ function exit_alt_screen() {
 }
   
 function close() {
-    sleep 3
     exit_alt_screen
+
+    if [[ "$#" -ge 1 && "$1" -eq 1 ]]; then
+        exec "$0" "$@"
+    fi
+
     exit 1
 }
 
 enter_alt_screen
 
 # ======== VARIABLES / CONSTANTS
+source ./lib/colors.sh
+source ./modules/cache.sh
+source ./tools/nmap.sh
+
 if [ $# -eq 0 ]; then
     echo -e "${RED}[-]${NC} No host avaliable."
     close
 fi
 
-source ./lib/colors.sh
-source ./modules/cache.sh
-source ./tools/nmap.sh
+chmod +x scripts/pidstat.sh
 
 # ======== HEADER
 exit_alt_screen
@@ -35,10 +41,9 @@ enter_alt_screen
 
 echo -e "${RED}$(toilet -f big BASCAN)${NC}"
 cache_folder_create
-history -r
 
 while true; do
-    read -e -p "$(echo -e "${BLUE}>${NC} ")" userInput
+    read -p "$(echo -e "${BLUE}>${NC} ")" userInput
     lowerUserInput="${userInput,,}"
 
     if [[ "${#userInput}" -eq 0 ]]; then
@@ -56,6 +61,10 @@ while true; do
     fi
 
     echo ""
+
+    if [[ "$lowerUserInput" == "restart" ]]; then
+        close "1"
+    fi
 
     if [[ "$lowerUserInput" == "scan" || "$lowerUserInput" =~ ^scan\  ]]; then
         if [[ "${#userInput}" -ge 5 ]]; then
@@ -148,12 +157,12 @@ while true; do
                 echo "\nUsage: option set <option> <value>"
                 echo "Options:"
                 echo "  intensity"
-                echo "    * slowly - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS." # -T0
-                echo "    * low - A little faster than slowly, but still very discreet to avoid security alarms." # -T1
-                echo "    * middle - Reduces bandwidth and CPU usage, useful for congested networks." # -T2
-                echo "    * normal - Balanced speed and discretion (default, recommended)." # -T3
+                echo "    * slowly     - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS." # -T0
+                echo "    * low        - A little faster than slowly, but still very discreet to avoid security alarms." # -T1
+                echo "    * middle     - Reduces bandwidth and CPU usage, useful for congested networks." # -T2
+                echo "    * normal     - Balanced speed and discretion (default, recommended)." # -T3
                 echo "    * aggressive - Speeds up scanning, ideal for fast networks with no security restrictions." # -T4
-                echo "    * insane - Maximum speed, can overload the network and be easily detected by firewalls." # -T5
+                echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls." # -T5
                 echo ""
                 continue
             fi
@@ -170,7 +179,7 @@ while true; do
         echo "\nUsage: option <operation> [...]"
         echo "  Operations:"
         echo "    set <option> <value> - set an option value"
-        echo "    show - show options value"
+        echo "    show - show options"
         echo ""
         continue
     fi

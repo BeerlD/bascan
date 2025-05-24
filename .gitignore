@@ -1,3 +1,4 @@
 bascan-*/
 bascan_configs.sh
 *.sh.bak
+*.log

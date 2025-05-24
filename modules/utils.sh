@@ -5,7 +5,13 @@ utils_message_loading_pid() {
     charIndex=0
 
     while ps -p "$1" > /dev/null 2>&1; do
-        echo -ne "$2 [${chars[$charIndex]}]\r"
+        if [[ "${#}" -eq 3 ]]; then
+            func=$3
+            echo -ne "$2 [${chars[$charIndex]}] $($func $1)\r"
+        else
+            echo -ne "$2 [${chars[$charIndex]}]\r"
+        fi
+        
         ((charIndex++))
         sleep 0.2
 
