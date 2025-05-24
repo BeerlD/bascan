@@ -1,9 +1,0 @@
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-05-24 12:14 -03
-Nmap scan report for latam-es.ring.com (23.227.38.74)
-Host is up (0.059s latency).
-Other addresses for latam-es.ring.com (not scanned): 2620:127:f00f:e::
-rDNS record for 23.227.38.74: shops.myshopify.com
-All 1000 scanned ports on latam-es.ring.com (23.227.38.74) are in ignored states.
-Not shown: 1000 filtered tcp ports (no-response)
-
-Nmap done: 1 IP address (1 host up) scanned in 61.27 seconds
