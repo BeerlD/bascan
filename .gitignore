@@ -3,5 +3,5 @@ bin/
 !res/*
 
 bascan_configs.sh
-*.sh.bak
+*.bak
 *.log
