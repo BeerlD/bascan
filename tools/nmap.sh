@@ -16,24 +16,26 @@ function setScanParams() {
         "insane") scan_params+=("-T5" "--max-rate" "5000") ;;
         *) scan_params+=("-T3" "--max-rate" "500") ;;
     esac
+
+    if [[ "$fastmode" == true ]]; then
+        scan_params+=("-F")
+    fi
 }
 
 function nmap_getCPUNetworkUsage() {
     # $1 -> PID
-    # $2 -> cache file path
 
-    local progress=$(grep -oE "[0-9]+\.[0-9]+%" $cache_file_path | tail -n 1 | sed -E 's/.* ([0-9]+\.[0-9]+)%.*/\1/')
+    local progress=$(grep -oE "[0-9]+\.[0-9]+%" "$cache_file_path" | tail -n 1 | sed -E 's/.* ([0-9]+\.[0-9]+)%.*/\1/')
+    local remaining=$(grep -oP '\(\K[^)]+' "$cache_file_path" | tail -n 1)
 
-    if [[ "${#progress}" -ge 1 ]]; then
-        echo -e "${CYAN}$progress${NC} done. CPU:${ORANGE}$(ps -p $$ -o %cpu=)%${NC} $(head -n 1 bascan_nmap_pidstat.log.bak 2>/dev/null)"
-    else
-        echo -e "CPU:${CYAN}$(ps -p $1 -o %cpu=)%${NC} -${ORANGE}$(ps -p $$ -o %cpu=)%${NC} $(head -n 1 bascan_nmap_pidstat.log.bak 2>/dev/null)"
+    if [[ -n "$progress" ]]; then
+        echo -e "${CYAN}$progress${NC} done ($remaining)."
     fi
 }
 
 function nmap_perform_result() {
-    # $1 -> cache file path
-    # $2 -> title
+    # $1 -> Cache file path
+    # $2 -> Title
 
     status=0
     readingResult=0
@@ -89,7 +91,6 @@ function nmap_fragment() {
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
     
-    
     while nmap_perform_result $cache_file_path $title; do
         break
     done
@@ -141,16 +142,50 @@ function nmap_udp_ports() {
     done
 }
 
-#function nmap_services
-#function nmap_devices
-#function namp_bruteforce()
-#function namp_vulnerabilites_scan()
+function nmap_scan_vulnerabilites() {
+    cache_tools_file_create "nmap" "vulnerabilities.txt"
+    cache_file_path=$(cache_tools_file_getPath "nmap" "vulnerabilities.txt")
+
+    source ././bascan_configs.sh
+    setScanParams
+
+    scan_params+=("--script" "vuln")
+    local title="Vulnerabilities"
+
+    nmap "${scan_params[@]}" "$HOST" > "$cache_file_path" & 
+    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
+
+    local found_vulns=0
+    local print_block=0
+
+    echo -e "\n${YELLOW}[+]${NC} ${CYAN}Vulnerabilities Found:${NC}"
+
+    while read -r line; do
+        if [[ "$line" =~ ^|_ ]]; then
+            if [[ "$print_block" -eq 1 ]]; then
+                echo ""
+            fi
+            print_block=1
+            found_vulns=1
+            echo -e "${RED}${line}${NC}"
+        elif [[ "$print_block" -eq 1 && -n "$line" ]]; then
+            echo "$line"
+        fi
+    done < "$cache_file_path"
+
+    if [[ "$found_vulns" -eq 0 ]]; then
+        echo -e " ${GREEN}No vulnerabilities found.${NC}"
+    fi
+}
 
 function nmap_start_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}nmap${NC} scan: ${YELLOW}$HOST${NC}... [PRESS ENTER TO VIEW/UPDATE PROGRESS]"
     nmap_fragment
     nmap_tcp_ports
     nmap_udp_ports
-    #nmap_services
-    #nmap_devices
+
+    if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
+        nmap_scan_vulnerabilites
+    fi
 }
