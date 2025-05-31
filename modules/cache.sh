@@ -60,9 +60,9 @@ function cache_tools_file_getPath() {
 
 function cache_config_file_setValue() {
     # $1 -> line number
-    # $2 -> new value
+    # $2 -> new value (passar aspas se quiser)
 
     cache_folder_create
     cp "bascan_configs.sh" "bascan_configs.sh.bak"
-    sed -i "$1s/\([^=]*\)=\"[^\"]*\"/\1=\"$2\"/" "bascan_configs.sh"
+    sed -i "$1s/\([^=]*\)=.*/\1=$2/" "bascan_configs.sh"
 }
