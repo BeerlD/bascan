@@ -36,9 +36,11 @@ function nmap_getCPUNetworkUsage() {
 function nmap_perform_result() {
     # $1 -> Cache file path
     # $2 -> Title
+    # [optional] $3 -> outputfile
 
-    status=0
-    readingResult=0
+    local status=0
+    local readingResult=0
+    local outputfile="$3"
 
     while read line; do
         if [[ "$readingResult" -eq 1 ]]; then
@@ -51,10 +53,15 @@ function nmap_perform_result() {
         fi
 
         if [[ "$line" =~ try\ -Pn ]]; then
-            echo -e " ${RED}Fail${NC}."
+            if [[ -n "$outputfile" ]]; then
+                echo -e " ${RED}Fail${NC}." >> "$outputfile"
+            else
+                echo -e " ${RED}Fail${NC}."
+            fi
+
             nmap "${scan_params[@]}" -Pn "$HOST" &> "$1" &
             ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-            utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage
+            utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage "$outputfile"
             status=1
             break
         fi
@@ -65,20 +72,33 @@ function nmap_perform_result() {
         fi
     done < <(cat "$1")
 
-    if [[ "$readingResult" -eq 0 ]]; then
-        echo -e " ${RED}No results${NC}."
-    elif [[ "$status" -eq 0 ]]; then
-        echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results)"
+    if [[ -n "$outputfile" ]]; then
+        if [[ "$readingResult" -eq 0 ]]; then
+            echo -e " ${RED}No results${NC}." >> "$outputfile"
+        elif [[ "$status" -eq 0 ]]; then
+            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results)" >> "$outputfile"
+        else
+            echo -e " ${RED}Fail${NC}." >> "$outputfile"
+        fi
     else
-        echo -e " ${RED}Fail${NC}."
+        if [[ "$readingResult" -eq 0 ]]; then
+            echo -e " ${RED}No results${NC}."
+        elif [[ "$status" -eq 0 ]]; then
+            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results)"
+        else
+            echo -e " ${RED}Fail${NC}."
+        fi
     fi
     
     return "$status"
 }
 
 function nmap_fragment() {
-    cache_tools_file_create "nmap" "fragments_packets.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap" "fragments_packets.txt")
+    # [optional] $1  -> output
+    local outputfile="$1"
+
+    cache_tools_file_create "nmap_logs" "fragments_packets.txt"
+    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "fragments_packets.txt")
 
     source ././bascan_configs.sh
 
@@ -89,16 +109,19 @@ function nmap_fragment() {
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
     
-    while nmap_perform_result $cache_file_path $title; do
+    while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
     done
 }
 
 function nmap_tcp_ports() {
-    cache_tools_file_create "nmap" "ports_tcp.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap" "ports_tcp.txt")
+    # [optional] $1  -> output
+    local outputfile="$1"
+
+    cache_tools_file_create "nmap_logs" "ports_tcp.txt"
+    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_tcp.txt")
 
     source ././bascan_configs.sh
     setScanParams
@@ -112,16 +135,19 @@ function nmap_tcp_ports() {
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
 
-    while nmap_perform_result $cache_file_path $title; do
+    while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
     done
 }
 
 function nmap_udp_ports() {
-    cache_tools_file_create "nmap" "ports_udp.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap" "ports_udp.txt")
+    # [optional] $1  -> output
+    local outputfile="$1"
+
+    cache_tools_file_create "nmap_logs" "ports_udp.txt"
+    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_udp.txt")
 
     source ././bascan_configs.sh
     setScanParams
@@ -135,57 +161,73 @@ function nmap_udp_ports() {
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
 
-    while nmap_perform_result $cache_file_path $title; do
+    while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
     done
 }
 
 function nmap_scan_vulnerabilites() {
-    cache_tools_file_create "nmap" "vulnerabilities.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap" "vulnerabilities.txt")
-
-    source ././bascan_configs.sh
-    setScanParams
-
-    scan_params+=("--script" "vuln")
-    local title="Vulnerabilities"
-
-    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" & 
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
-
-    local found_vulns=0
-    local print_block=0
-
-    echo -e "\n${YELLOW}[+]${NC} ${CYAN}Vulnerabilities Found:${NC}"
-
-    while read -r line; do
-        if [[ "$line" =~ ^|_ ]]; then
-            if [[ "$print_block" -eq 1 ]]; then
-                echo ""
-            fi
-            print_block=1
-            found_vulns=1
-            echo -e "${RED}${line}${NC}"
-        elif [[ "$print_block" -eq 1 && -n "$line" ]]; then
-            echo "$line"
-        fi
-    done < "$cache_file_path"
-
-    if [[ "$found_vulns" -eq 0 ]]; then
-        echo -e " ${GREEN}No vulnerabilities found.${NC}"
-    fi
+    echo ""
 }
 
 function start_nmap_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}nmap${NC} scan: ${YELLOW}$HOST${NC}... [PRESS ENTER TO VIEW/UPDATE PROGRESS]"
+    
+    source ././bascan_configs.sh
+
+    if [[ "$multitrhead" == true ]]; then
+        processesPid=()
+
+        cache_tools_file_create "nmap_results" "fragments.txt"
+        cache_tools_file_create "nmap_results" "ports_tcp.txt"
+        cache_tools_file_create "nmap_results" "ports_udp.txt"
+        fragment_cache_file=$(cache_tools_file_getPath "nmap_results" "fragments.txt")
+        tcp_ports_cache_file=$(cache_tools_file_getPath "nmap_results" "ports_tcp.txt")
+        udp_ports_cache_file=$(cache_tools_file_getPath "nmap_results" "ports_udp.txt")
+    
+        (nmap_fragment "$fragment_cache_file") &
+        processesPid+=($!)
+
+        (nmap_tcp_ports "$tcp_ports_cache_file") &
+        processesPid+=($!)
+
+        (nmap_udp_ports "$udp_ports_cache_file") &
+        processesPid+=($!)
+
+        function checkProcessesIsRunning() {
+            tput rc
+
+            for file in "$fragment_cache_file" "$tcp_ports_cache_file" "$udp_ports_cache_file"; do
+                tput el 
+                content=$(tail -n 1 "$file")
+                
+                if [[ -n "$content" ]]; then
+                    echo -ne "$content\n"
+                else
+                    echo
+                fi
+            done
+
+            for processPid in "${processesPid[@]}"; do
+                if kill -0 "$processPid" 2>/dev/null; then
+                    return 0
+                fi
+            done
+
+            return 1
+        }
+
+        while checkProcessesIsRunning; do
+            sleep 0.1
+        done
+
+        return 0
+    fi
+
     nmap_fragment
     nmap_tcp_ports
     nmap_udp_ports
-
-    if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
-        nmap_scan_vulnerabilites
-    fi
+    return 0
 }
