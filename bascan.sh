@@ -1,5 +1,22 @@
 #!/bin/bash
 
+if [ $# -eq 0 ]; then
+    echo -e "\e[31m[-]\e[0m No host avaliable."
+    exit 0
+fi
+
+if ! command -v toilet >/dev/null 2>&1 || ! command -v figlet >/dev/null 2>&1; then 
+    echo -ne "\e[33m[+]\e[0m Installing packages: \e[36mtoilet\e[0m and \e[36mfiglet\e[0m... "
+
+    if ! sudo apt install -y toilet toilet-fonts figlet >/dev/null 2>&1; then
+        echo -e "\e[31mError\e[0m."
+        exit 0
+    fi
+
+    echo -e "\e[32mDone\e[0m."
+    sleep 2
+fi
+
 # ======== FUNCTIONS
 
 function enter_alt_screen() {
@@ -24,26 +41,16 @@ function close() {
     exit 1
 }
 
-enter_alt_screen
-
 # ======== VARIABLES / CONSTANTS
 source ./lib/colors.sh
 source ./modules/cache.sh
 source ./tools/INCLUDE.sh
 
-if [ $# -eq 0 ]; then
-    echo -e "${RED}[-]${NC} No host avaliable."
-    sleep 3
-    close
-fi
-
 chmod +x scripts/pidstat.sh
 
-trap 'stty echo icanon; tput cnorm; exit' INT TERM
-
 # ======== HEADER
-exit_alt_screen
 enter_alt_screen
+trap 'stty echo icanon; tput cnorm; exit' INT TERM
 
 echo -e "${RED}$(toilet -f big BASCAN)${NC}"
 cache_folder_create
@@ -107,7 +114,7 @@ while true; do
 
     if [[ "$lowerUserInput" == "install" || "$lowerUserInput" =~ ^install\  ]]; then
         if [[ "${#userInput}" -ge 8 ]]; then
-            packages_to_install=("python3" "python3-httpx" "toilet" "nmap" "nikto")
+            packages_to_install=("python3" "python3-httpx" "nmap" "nikto")
             package_selected="${lowerUserInput:8}"
             findedPackage=0
 
@@ -184,8 +191,19 @@ while true; do
                             if [[ "$match" == false ]]; then
                                 echo -e "${RED}ERROR${NC} Invalid option value: '$value'."
                             else
-                                cache_config_file_setValue 2 "$value"
-                                echo -e "${GRREN}SETTED${NC} option intensity setted to: '$value'."
+                                cache_config_file_setValue 2 "\"$value\""
+                                echo -e "${GREEN}SETTED${NC} option intensity setted to: '$value'."
+                                echo ""
+                                continue
+                            fi
+                        fi
+                    elif [[ "$option" =~ ^multithread ]]; then
+                        if [[ "$option" != "multithread" ]]; then
+                            value="${option:12}"
+
+                            if [[ "$value" == "true" || "$value" == "false" ]]; then
+                                cache_config_file_setValue 3 "$value"
+                                echo -e "${GREEN}SETTED${NC} option multithread setted to: '$value'."
                                 echo ""
                                 continue
                             fi
