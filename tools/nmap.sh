@@ -1,4 +1,4 @@
-source ././include.sh
+source ././INCLUDE.sh
 
 declare -g scan_params
 declare -g cache_file_path
@@ -52,8 +52,8 @@ function nmap_perform_result() {
 
         if [[ "$line" =~ try\ -Pn ]]; then
             echo -e " ${RED}Fail${NC}."
-            nmap "${scan_params[@]}" -Pn "$HOST" > "$1" &
-            ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+            nmap "${scan_params[@]}" -Pn "$HOST" &> "$1" &
+            ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
             utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage
             status=1
             break
@@ -87,8 +87,8 @@ function nmap_fragment() {
 
     local title="Fragments packets"
 
-    nmap "${scan_params[@]}" "$HOST" > "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
+    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
     
     while nmap_perform_result $cache_file_path $title; do
@@ -110,8 +110,8 @@ function nmap_tcp_ports() {
     scan_params+=("-sV")
     local title="TCP Ports"
 
-    nmap "${scan_params[@]}" "$HOST" > "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
+    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
 
     while nmap_perform_result $cache_file_path $title; do
@@ -133,8 +133,8 @@ function nmap_udp_ports() {
     scan_params+=("-sU")
     local title="UDP Ports"
 
-    nmap "${scan_params[@]}" "$HOST" > "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
+    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
 
     while nmap_perform_result $cache_file_path $title; do
@@ -152,8 +152,8 @@ function nmap_scan_vulnerabilites() {
     scan_params+=("--script" "vuln")
     local title="Vulnerabilities"
 
-    nmap "${scan_params[@]}" "$HOST" > "$cache_file_path" & 
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" > /dev/null &
+    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" & 
+    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage
 
     local found_vulns=0
@@ -179,7 +179,7 @@ function nmap_scan_vulnerabilites() {
     fi
 }
 
-function nmap_start_scan() {
+function start_nmap_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}nmap${NC} scan: ${YELLOW}$HOST${NC}... [PRESS ENTER TO VIEW/UPDATE PROGRESS]"
     nmap_fragment
     nmap_tcp_ports

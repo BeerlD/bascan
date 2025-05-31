@@ -17,8 +17,8 @@ function close() {
     exit_alt_screen
 
     if [[ "$#" -ge 1 && "$1" -eq 1 ]]; then
-    
-        exec "$0" "$@"
+        script_path="$(realpath "$0")"
+        exec "$script_path" "$@"
     fi
 
     exit 1
@@ -29,8 +29,7 @@ enter_alt_screen
 # ======== VARIABLES / CONSTANTS
 source ./lib/colors.sh
 source ./modules/cache.sh
-source ./tools/nmap.sh
-source ./tools/scanless.sh
+source ./tools/INCLUDE.sh
 
 if [ $# -eq 0 ]; then
     echo -e "${RED}[-]${NC} No host avaliable."
@@ -82,8 +81,14 @@ while true; do
     if [[ "$lowerUserInput" == "scan" || "$lowerUserInput" =~ ^scan\  ]]; then
         if [[ "${#userInput}" -ge 5 ]]; then
             if [[ "${lowerUserInput:5}" == "ports" ]]; then
-                scanless_start_scan
-                nmap_start_scan
+                start_nmap_scan
+                continue
+            fi
+
+            if [[ "${lowerUserInput:5}" == "all" ]]; then
+                start_dig_scan
+                start_whois_scan
+                start_nmap_scan
                 continue
             fi
         fi
@@ -120,20 +125,6 @@ while true; do
 
                 findedPackage=1
             fi
-
-            if [[ $package_selected == "scanless" || $package_selected == "all" ]]; then
-                echo -ne "${YELLOW}[+]${NC} Installing package: ${CYAN}scanless${NC}... "
-
-                if ! sudo apt install -y "python3" > /dev/null 2>&1; then
-                    echo -e "${RED}Error${NC}."
-                elif ! pip install scanless --user --break-system-packages > /dev/null 2>&1; then
-                    echo -e "${RED}Error${NC}."
-                else
-                    echo -e "${GREEN}Done${NC}."
-                fi
-
-                findedPackage=1
-            fi
             
             if [[ $findedPackage -eq 0 ]]; then
                 for package in "${packages_to_install[@]}"; do
@@ -167,7 +158,6 @@ while true; do
         echo "  Packages:"
         echo "    all - Install all packages."
         echo "    nmap - Network scanner, identifier of active hosts, open ports, services and operating systems."
-        echo "    scanless - Anonymous scanning via online services."
         echo ""
         continue
     fi
@@ -210,12 +200,14 @@ while true; do
                 echo -e "\nUsage: option set <option> <value>"
                 echo "Options:"
                 echo "  intensity"
-                echo "    * slowly     - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS." # -T0
-                echo "    * low        - A little faster than slowly, but still very discreet to avoid security alarms." # -T1
-                echo "    * middle     - Reduces bandwidth and CPU usage, useful for congested networks." # -T2
-                echo "    * normal     - Balanced speed and discretion (default, recommended)." # -T3
-                echo "    * aggressive - Speeds up scanning, ideal for fast networks with no security restrictions." # -T4
-                echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls." # -T5
+                echo "    * slowly     - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS."
+                echo "    * low        - A little faster than slowly, but still very discreet to avoid security alarms."
+                echo "    * middle     - Reduces bandwidth and CPU usage, useful for congested networks."
+                echo "    * normal     - Balanced speed and discretion (default, recommended)."
+                echo "    * aggressive - Speeds up scanning, ideal for fast networks with no security restrictions."
+                echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls."
+                echo "  fastmode - Fast mode, scan fewer vulnerabilities."
+                echo "  multithread - Scan asynchronously."
                 echo ""
                 continue
             fi
@@ -235,6 +227,10 @@ while true; do
         echo "    show - show options"
         echo ""
         continue
+    fi
+
+    if [[ "$lowerUserInput" == "kill" ]]; then
+        pkill -f bascan.sh
     fi
 
     echo -e "${RED}ERROR${NC} Invalid command: '$userInput'."

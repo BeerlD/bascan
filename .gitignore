@@ -5,3 +5,4 @@ bin/
 bascan_configs.sh
 *.bak
 *.log
+.vscode
