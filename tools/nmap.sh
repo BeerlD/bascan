@@ -1,11 +1,12 @@
 source ././INCLUDE.sh
 
-declare -g scan_params
-declare -g cache_file_path
-
 function setScanParams() {
+    # $1 -> var out 
+
+    local -n _out=$1
+    local scan_params=()
+
     source ././bascan_configs.sh
-    scan_params=()
 
     case "$intensity" in
         "slowly") scan_params+=("-T0" "--max-rate" "5") ;;
@@ -20,13 +21,16 @@ function setScanParams() {
     if [[ "$fastmode" == true ]]; then
         scan_params+=("-F")
     fi
+
+    _out=("${scan_params[@]}")  # Atribui à variável de saída
 }
 
 function nmap_getCPUNetworkUsage() {
     # $1 -> PID
+    # $2 -> cache file path
 
-    local progress=$(grep -oE "[0-9]+\.[0-9]+%" "$cache_file_path" | tail -n 1 | sed -E 's/.* ([0-9]+\.[0-9]+)%.*/\1/')
-    local remaining=$(grep -oP '\(\K[^)]+' "$cache_file_path" | tail -n 1)
+    local progress=$(grep -oE "[0-9]+\.[0-9]+%" "$2" | tail -n 1 | sed -E 's/.* ([0-9]+\.[0-9]+)%.*/\1/')
+    local remaining=$(grep -oP '\(\K[^)]+' "$2" | tail -n 1)
 
     if [[ -n "$progress" ]]; then
         echo -e "${CYAN}$progress${NC} done ($remaining)."
@@ -61,7 +65,7 @@ function nmap_perform_result() {
 
             nmap "${scan_params[@]}" -Pn "$HOST" &> "$1" &
             ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-            utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage "$outputfile"
+            utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage "$1" "$outputfile"
             status=1
             break
         fi
@@ -98,18 +102,19 @@ function nmap_fragment() {
     local outputfile="$1"
 
     cache_tools_file_create "nmap_logs" "fragments_packets.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "fragments_packets.txt")
+    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "fragments_packets.txt")
 
     source ././bascan_configs.sh
 
-    setScanParams
+    declare -a scan_params
+    setScanParams scan_params
     scan_params+=("-f")
 
     local title="Fragments packets"
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
     
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
@@ -121,10 +126,12 @@ function nmap_tcp_ports() {
     local outputfile="$1"
 
     cache_tools_file_create "nmap_logs" "ports_tcp.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_tcp.txt")
+    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_tcp.txt")
 
     source ././bascan_configs.sh
-    setScanParams
+
+    declare -a scan_params
+    setScanParams scan_params
 
     if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
         scan_params+=("-p-")
@@ -135,7 +142,7 @@ function nmap_tcp_ports() {
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
 
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
@@ -147,10 +154,12 @@ function nmap_udp_ports() {
     local outputfile="$1"
 
     cache_tools_file_create "nmap_logs" "ports_udp.txt"
-    cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_udp.txt")
+    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_udp.txt")
 
     source ././bascan_configs.sh
-    setScanParams
+
+    declare -a scan_params
+    setScanParams scan_params
 
     if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
         scan_params+=("-p-")
@@ -161,7 +170,7 @@ function nmap_udp_ports() {
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$outputfile"
+    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
 
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
@@ -174,7 +183,7 @@ function nmap_scan_vulnerabilites() {
 
 function start_nmap_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}nmap${NC} scan: ${YELLOW}$HOST${NC}... [PRESS ENTER TO VIEW/UPDATE PROGRESS]"
-    
+
     source ././bascan_configs.sh
 
     if [[ "$multitrhead" == true ]]; then
@@ -218,6 +227,8 @@ function start_nmap_scan() {
 
             return 1
         }
+
+        tput sc
 
         while checkProcessesIsRunning; do
             sleep 0.1
