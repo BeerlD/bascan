@@ -18,14 +18,14 @@ A command-line tool for DNS queries. Ideal for troubleshooting name resolution i
 
 A tool for retrieving registration information of domains and IP addresses. Displays data such as domain owner, creation/expiration dates, name servers, and contact details.
 
-## Instalation
+## Installation
 
 | OS | Support |
 | :--------------------- | :---------------------: |
 | Kali-Linux             | :white_check_mark:      |
 
 ```sh
-
+bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
 ```
 
 ### Build
