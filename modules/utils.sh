@@ -4,19 +4,21 @@ utils_message_loading_pid() {
     # $1 -> pid
     # $2 -> message
     # $3 -> function
-    # $4 -> outputfile
+    # $4 -> cache file path
+    # [optional] $5 -> outputfile
 
     local chars=("/" "-" "\\" "|")
     local charIndex=0
-    local outputfile="$4"
+    local outputfile="$5"
 
     while ps -p "$1" > /dev/null 2>&1; do
-        if [[ "${#}" -eq 3 ]] && declare -F "$3" > /dev/null; then
+        if [[ "${#}" -ge 3 ]] && declare -F "$3" > /dev/null; then
             func=$3
+
             if [[ -n "$outputfile" ]]; then
-                echo -ne "\r$2 [${chars[$charIndex]}] $($func $1)$(tput el)" > "$outputfile"
+                echo -ne "\r$2 [${chars[$charIndex]}] $($func "$1" "$4")$(tput el)" > "$outputfile"
             else
-                echo -ne "\r$2 [${chars[$charIndex]}] $($func $1)$(tput el)"
+                echo -ne "\r$2 [${chars[$charIndex]}] $($func "$1" "$4")$(tput el)"
             fi
         else
             if [[ -n "$outputfile" ]]; then
