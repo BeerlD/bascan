@@ -1,4 +1,4 @@
-# Introduction
+# 🌐 Bascan - Automation and Scanning Vulnerabilities
 
 Bascan is a tool that aims to bring together several vulnerability analysis and scanning tools on a website. It aims to provide clear and objective information on how the vulnerability works and how to fix it. It is a tool developed for Bug Bounters, Red Team and Blue Team users.
 
@@ -7,25 +7,58 @@ Bascan is a tool that aims to bring together several vulnerability analysis and 
 ## 🛠️ Tools Used
 
 ### 🔍 Nmap (Network Mapper)
+
 A powerful utility for network scanning. It helps identify live hosts, open ports, running services, and operating systems. Commonly used for security auditing and network discovery.
 
 ### 🌐 Dig (Domain Information Groper)
+
 A command-line tool for DNS queries. Ideal for troubleshooting name resolution issues, retrieving domain records (A, MX, TXT, etc.), and analyzing DNS servers.
 
 ### 🧾 Whois
+
 A tool for retrieving registration information of domains and IP addresses. Displays data such as domain owner, creation/expiration dates, name servers, and contact details.
 
-# Contributors
+## Instalation
 
-<table>
+| OS | Support |
+| :--------------------- | :---------------------: |
+| Kali-Linux             | :white_check_mark:      |
+
+```sh
+
+```
+
+### Build
+
+```sh
+sudo add-apt-repository ppa:neurobin/ppa
+sudo apt-get update
+sudo apt-get install -y shc make gcc
+
+git clone https://github.com/BeerlD/bascan.git
+cd bascan
+make build
+```
+
+## Author
+
+**Powered by @BeerlD** <br>
+
+> :warning: Only the automation part was developed by me, the tools used were not created by me.
+
+## Contributors
+
+Contributions are welcome!
+
+<!--- <table>
   <tr>
     <td align="center">
       <img src="https://github.com/BeerlD.png" width="60" height="60" style="border-radius:50%; border: 2px solid #ccc;"><br>
       <sub><b>@BeerlD</b></sub>
     </td>
   </tr>
-</table>
+</table> -->
 
-<hr>
+## License
 
-License: [MIT](LICENSE)
+This project is licensed under the [MIT License](LICENSE).
