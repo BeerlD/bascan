@@ -20,7 +20,7 @@ A tool for retrieving registration information of domains and IP addresses. Disp
 
 ## Installation
 
-| OS | Support |
+| OS                     | Support                 |
 | :--------------------- | :---------------------: |
 | Kali-Linux             | :white_check_mark:      |
 
