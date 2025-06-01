@@ -4,7 +4,7 @@ Bascan is a tool that aims to bring together several vulnerability analysis and 
 
 > :warning: This tool should be used ethically and responsibly. I am not responsible for its use.
 
-## 🛠️ Tools Used
+## 🛠️ Tools
 
 ### 🔍 Nmap (Network Mapper)
 
