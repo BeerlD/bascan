@@ -30,11 +30,12 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/
 
 ### Build
 
+#### Install Compiler
+
 ```sh
 sudo apt-get update -y
 sudo apt-get install -y make gcc
 
-CURRENT_PATH=$(pwd)
 cd /usr/local/bin/
 wget https://github.com/neurobin/shc/archive/refs/tags/4.0.3.tar.gz
 tar -xvzf 4.0.3.tar.gz
@@ -43,8 +44,11 @@ cd shc-4.0.3
 
 make
 sudo make install
+```
 
-cd "$CURRENT_PATH"
+#### Build Command
+
+```sh
 git clone https://github.com/BeerlD/bascan.git
 cd bascan
 make build
