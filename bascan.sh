@@ -52,9 +52,7 @@ chmod +x scripts/pidstat.sh
 # ======== HEADER
 enter_alt_screen
 trap 'stty echo icanon; tput cnorm; exit' INT TERM
-
 echo -e "${RED}$(toilet -f big BASCAN)${NC}"
-cache_folder_create
 
 while true; do
     stty echo icanon
@@ -87,10 +85,19 @@ while true; do
     fi
 
     if [[ "$lowerUserInput" == "vuln" ]]; then
-        for vulnerability in "${vulnerabilities[@]}"; do
-            echo -e "$vulnerability"
+        for ((index=0;index<"${#vulnerabilities[@]}";index++)); do
+            if [[ "${vulnerabilities_level[$index]}" == 0 ]]; then
+                echo -e "${YELLOW}Warning${NC}: ${vulnerabilities[$index]}"
+            elif [[ "${vulnerabilities_level[$index]}" == 1 ]]; then
+                echo -e "${ORANGE}Issue${NC}: ${vulnerabilities[$index]}"
+            elif [[ "${vulnerabilities_level[$index]}" == 2 ]]; then
+                echo -e "${RED}Vulnerability${NC}: ${vulnerabilities[$index]}"
+            else
+                echo -e "${vulnerabilities[$index]}"
+            fi
         done
 
+        echo ""
         continue
     fi
 
@@ -99,13 +106,19 @@ while true; do
             vulnerabilities=()
             vulnerabilities_level=()
 
+            if [[ -f "./bascan_configs.sh" ]]; then
+                source ./bascan_configs.sh
+                cache_folder_create "$new_cache_folder"
+            else
+                cache_folder_create false
+            fi
+
             if [[ "${lowerUserInput:5}" == "network" ]]; then
                 start_nmap_scan
             elif [[ "${lowerUserInput:5}" == "informations" ]]; then
                 start_dig_scan
                 start_whois_scan
             elif [[ "${lowerUserInput:5}" == "all" ]]; then
-                cache_folder_create true
                 start_dig_scan
                 start_whois_scan
                 start_nmap_scan
@@ -241,6 +254,7 @@ while true; do
                 echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls."
                 echo "  fastmode - Fast mode, scan fewer vulnerabilities."
                 echo "  multithread - Scan asynchronously."
+                echo "  new_cache_folder - Creates a new cache folder with each scan."
                 echo ""
                 continue
             fi
