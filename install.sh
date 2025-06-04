@@ -5,8 +5,17 @@ RED='\033[1;31m'
 NC='\033[0m'
 
 echo -e "${YELLOW}[+]${NC} Installing Bascan..."
-sudo apt update -y
-sudo apt install -y jq
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}[-]${NC} Error: This script must be run as root (use sudo)."
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo -e "${YELLOW}[+]${NC} Installing jq..."
+    sudo apt update -y
+    sudo apt install -y jq
+fi
 
 BIN="bascan-linux_x64"
 URL=$(curl -s https://api.github.com/repos/BeerlD/Bascan/releases/latest | jq -r ".assets[] | select(.name==\"$BIN\") | .browser_download_url")
@@ -18,15 +27,16 @@ fi
 
 echo -e "${YELLOW}[+]${NC} Downloading $BIN..."
 wget -O "/usr/local/bin/$BIN" "$URL" &> /dev/null
+mv -f "/usr/local/bin/$BIN" "/usr/local/bin/bascan"
 
-if [ ! -f "/usr/local/bin/$BIN" ]; then
+if [ ! -f "/usr/local/bin/bascan" ]; then
     echo -e "${RED}[-]${NC} Error: Download failed. Check your connection or try again later."
     exit 1
 fi
 
-chmod +x "/usr/local/bin/$BIN"
+chmod +x "/usr/local/bin/bascan"
 
 export PATH=$PATH:/usr/local/bin
 echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
 
-echo -e "${YELLOW}[+]${NC} $BIN has been successfully installed (/usr/local/bin/)."
+echo -e "${YELLOW}[+]${NC} bascan has been successfully installed (/usr/local/bin/)."
