@@ -1,17 +1,77 @@
 source ././INCLUDE.sh
 
-declare -g scan_params
-declare -g cache_file_path
+function dig_perform_result() {
+    local file_path="$1"
+    local -n vulnerabilitiesCount_out=$2
+    vulnerabilitiesCount_out=0
+
+    function registerVulnerability() {
+        for vulnerability in "${vulnerabilities[@]}"; do
+            if [[ "$vulnerability" == "$1" ]]; then
+                return 1
+            fi
+        done
+
+        addVulnerability "$1" "$2"
+        vulnerabilitiesCount_out=$((vulnerabilitiesCount_out + 1))
+        return 0
+    }
+
+    if [[ ! -s "$file_path" ]] || grep -qE 'no servers could be reached|connection.*failed' "$file_path"; then
+        return 1
+    fi
+
+    local has_records=$(grep -v '^;' "$file_path" | grep -cE 'IN\s+(A|AAAA|MX|TXT|CNAME|NS|SOA)')
+
+    if [[ "$has_records" -eq 0 ]]; then
+        registerVulnerability "(DNS) No DNS records found in dig output."
+    fi
+
+    local ttl_zero_count=$(awk '/IN/ && $2 == 0' "$file_path" | wc -l)
+    if (( ttl_zero_count > 0 )); then
+        registerVulnerability "(DNS) TTL is zero for some records (not recommended)."
+    fi
+
+    if grep -qE 'IN\s+TXT' "$file_path"; then
+        if grep -qE 'v=spf1\s+~all' "$file_path"; then
+            registerVulnerability "(DNS) SPF record uses ~all (softfail), consider using -all (fail)."
+        fi
+    fi
+
+    if grep -qE 'IN\s+MX' "$file_path"; then
+        local mx_records=$(grep -E 'IN\s+MX' "$file_path" | awk '{print $NF}')
+        for mx in $mx_records; do
+            if [[ "$mx" == *"gmail.com." || "$mx" == *"outlook.com." ]]; then
+                registerVulnerability "(DNS) MX record points to public email provider ($mx)."
+            fi
+        done
+    fi
+}
 
 function start_dig_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}dig${NC} scan: ${YELLOW}$HOST${NC}..."
 
-    cache_tools_file_create_without_folder "dig.txt"
-    cache_file_path=$(cache_tools_file_getPath "" "dig.txt")
+    local types=("ANY" "A" "AAAA" "MX" "NS" "TXT" "SOA" "CNAME")
+    local found_total=0
 
-    dig "$HOST" "any +noall +answer" &> "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_dig_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}DNS Records${NC}..."
+    for type in "${types[@]}"; do
+        local filename="dig_${type}.txt"
+        cache_tools_file_create "dig" "$filename"
+        local cache_file_path=$(cache_tools_file_getPath "dig" "$filename")
 
-    echo -e " ${GREEN}Done${NC}."
+        dig "$HOST" "$type" +noall +answer &> "$cache_file_path" &
+        ././scripts/pidstat.sh $! "bascan_dig_pidstat_${type}.log" &> /dev/null &
+        utils_message_loading_pid $! "  ${ORANGE}DNS ($type)${NC}..."
+
+        local found=0
+        dig_perform_result "$cache_file_path" found
+
+        if [[ "$found" -eq 0 ]]; then
+            echo -e " ${RED}No results${NC}."
+        else
+            echo -e " ${GREEN}Done${NC} (${found} results)."
+        fi
+
+        found_total=$((found_total + found))
+    done
 }
