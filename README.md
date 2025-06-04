@@ -31,10 +31,20 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/
 ### Build
 
 ```sh
-sudo add-apt-repository ppa:neurobin/ppa
-sudo apt-get update
-sudo apt-get install -y shc make gcc
+sudo apt-get update -y
+sudo apt-get install -y make gcc
 
+CURRENT_PATH=$(pwd)
+cd /usr/local/bin/
+wget https://github.com/neurobin/shc/archive/refs/tags/4.0.3.tar.gz
+tar -xvzf 4.0.3.tar.gz
+cd shc-4.0.3
+./configure
+
+make
+sudo make install
+
+cd "$CURRENT_PATH"
 git clone https://github.com/BeerlD/bascan.git
 cd bascan
 make build
