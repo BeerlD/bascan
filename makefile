@@ -1,6 +1,6 @@
 FILE=bascan.sh
 OUTPUT=bin/bascan
-COMPILER=/home/beerl/shc/src/shc
+COMPILER=shc
 FLAGS=-f
 
 .PHONY: build clean all
