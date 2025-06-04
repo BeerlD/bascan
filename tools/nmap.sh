@@ -37,6 +37,59 @@ function nmap_getCPUNetworkUsage() {
     fi
 }
 
+function nmap_perform_vulnerabilities() {
+    local file_path="$1"
+    local -n vulnerabilitiesCount_out=$2
+    vulnerabilitiesCount_out=0
+
+    function registerVulnerability() {
+        # $1 -> message
+        # $2 -> level (0-warning, 1-error, 2-severe)
+        for vulnerability in "${vulnerabilities[@]}"; do
+            if [[ "$vulnerability" == "$1" ]]; then
+                return 1
+            fi
+        done
+        addVulnerability "$1" "$2"
+        vulnerabilitiesCount_out=$((vulnerabilitiesCount_out + 1))
+        return 0
+    }
+
+    if [[ ! -s "$file_path" ]] || grep -qEi 'failed|error|connection refused' "$file_path"; then
+        return 1
+    fi
+
+    if grep -qE '22/tcp\s+open' "$file_path"; then
+        registerVulnerability "(Nmap) SSH port 22 is open." 1
+    fi
+
+    if grep -qE '23/tcp\s+open' "$file_path"; then
+        registerVulnerability "(Nmap) Telnet port 23 is open (insecure service)." 2
+    fi
+
+    if grep -qE '3389/tcp\s+open' "$file_path"; then
+        registerVulnerability "(Nmap) RDP port 3389 is open." 1
+    fi
+
+    if grep -qEi 'vsftpd\s+2\.3\.4' "$file_path"; then
+        registerVulnerability "(Nmap) vsftpd 2.3.4 detected, known backdoor vulnerability." 2
+    fi
+
+    if grep -qEi 'apache.*httpd.*2\.2' "$file_path"; then
+        registerVulnerability "(Nmap) Apache HTTPD 2.2 detected, outdated version." 1
+    fi
+
+    if grep -qE 'udp open' "$file_path"; then
+        registerVulnerability "(Nmap) UDP ports are open, verify for possible vulnerabilities." 0
+    fi
+
+    if grep -qE 'open\s+unknown' "$file_path"; then
+        registerVulnerability "(Nmap) Open ports with unknown services detected." 0
+    fi
+
+    return 0
+}
+
 function nmap_perform_result() {
     # $1 -> Cache file path
     # $2 -> Title
@@ -45,13 +98,13 @@ function nmap_perform_result() {
     local status=0
     local readingResult=0
     local outputfile="$3"
+    ports_scanned=()
 
-    while read line; do
+    while read -r line; do
         if [[ "$readingResult" -eq 1 ]]; then
-            if [[ "${#line}" -eq 0 ]]; then
+            if [[ -z "$line" ]]; then
                 break
             fi
-
             ports_scanned+=("$line")
             continue
         fi
@@ -76,11 +129,14 @@ function nmap_perform_result() {
         fi
     done < <(cat "$1")
 
+    local found_vulnerabilities=0
+    nmap_perform_vulnerabilities "$1" found_vulnerabilities
+
     if [[ -n "$outputfile" ]]; then
         if [[ "$readingResult" -eq 0 ]]; then
             echo -e " ${RED}No results${NC}." >> "$outputfile"
         elif [[ "$status" -eq 0 ]]; then
-            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results)" >> "$outputfile"
+            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results, $found_vulnerabilities vulnerabilities)" >> "$outputfile"
         else
             echo -e " ${RED}Fail${NC}." >> "$outputfile"
         fi
@@ -88,85 +144,78 @@ function nmap_perform_result() {
         if [[ "$readingResult" -eq 0 ]]; then
             echo -e " ${RED}No results${NC}."
         elif [[ "$status" -eq 0 ]]; then
-            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results)"
+            echo -e " ${GREEN}Done${NC}. (${#ports_scanned[@]} results, $found_vulnerabilities vulnerabilities)"
         else
             echo -e " ${RED}Fail${NC}."
         fi
     fi
-    
+
     return "$status"
 }
 
-function nmap_fragment() {
-    # [optional] $1  -> output
-    local outputfile="$1"
+function nmap_scan_mode() {
+    # $1 -> mode (fragment, tcp, udp, quick, full_tcp, full_udp, os_detect)
+    # [optional] $2 -> outputfile
 
-    cache_tools_file_create "nmap" "fragments_packets.log"
-    local cache_file_path=$(cache_tools_file_getPath "nmap" "fragments_packets.log")
+    local mode="$1"
+    local outputfile="$2"
+    local title=""
+    local scan_file=""
+    local -a scan_params=()
 
-    source ././bascan_configs.sh
-
-    declare -a scan_params
-    setScanParams scan_params
-    scan_params+=("-f")
-
-    local title="Fragments packets"
-
-    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
-    
-    while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
-        break
-    done
-}
-
-function nmap_tcp_ports() {
-    # [optional] $1  -> output
-    local outputfile="$1"
-
-    cache_tools_file_create "nmap" "ports_tcp.log"
-    local cache_file_path=$(cache_tools_file_getPath "nmap" "ports_tcp.log")
+    cache_tools_file_create "nmap" "${mode}.log"
+    local cache_file_path=$(cache_tools_file_getPath "nmap" "${mode}.log")
 
     source ././bascan_configs.sh
-
-    declare -a scan_params
     setScanParams scan_params
 
-    if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
-        scan_params+=("-p-")
-    fi
+    case "$mode" in
+        fragment)
+            title="Fragment Packets"
+            scan_params+=("-f")
+            ;;
 
-    scan_params+=("-sV")
-    local title="TCP Ports"
+        tcp)
+            title="TCP Ports"
+            if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
+                scan_params+=("-p-")
+            fi
+            scan_params+=("-sV")
+            ;;
 
-    nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
-    utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
+        udp)
+            title="UDP Ports"
+            if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
+                scan_params+=("-p-")
+            fi
+            scan_params+=("-sU")
+            ;;
 
-    while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
-        break
-    done
-}
+        quick)
+            title="Quick Scan"
+            scan_params+=("-T4" "-F" "-sV")
+            ;;
 
-function nmap_udp_ports() {
-    # [optional] $1  -> output
-    local outputfile="$1"
+        full_tcp)
+            title="Full TCP Scan"
+            scan_params+=("-p-" "-sV" "-T4")
+            ;;
 
-    cache_tools_file_create "nmap" "ports_udp.log"
-    local cache_file_path=$(cache_tools_file_getPath "nmap" "ports_udp.log")
+        full_udp)
+            title="Full UDP Scan"
+            scan_params+=("-p-" "-sU" "-T4")
+            ;;
 
-    source ././bascan_configs.sh
+        os_detect)
+            title="OS Detection"
+            scan_params+=("-O" "-T4")
+            ;;
 
-    declare -a scan_params
-    setScanParams scan_params
-
-    if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
-        scan_params+=("-p-")
-    fi
-
-    scan_params+=("-sU")
-    local title="UDP Ports"
+        *)
+            echo "Unknown nmap scan mode: $mode"
+            return 1
+            ;;
+    esac
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
     ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
@@ -175,10 +224,6 @@ function nmap_udp_ports() {
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
         break
     done
-}
-
-function nmap_scan_vulnerabilites() {
-    echo ""
 }
 
 function start_nmap_scan() {
@@ -186,32 +231,33 @@ function start_nmap_scan() {
 
     source ././bascan_configs.sh
 
+    local modes=("fragment" "tcp" "udp" "quick" "full_tcp" "full_udp" "os_detect")
+
     if [[ "$multitrhead" == true ]]; then
         processesPid=()
 
-        cache_tools_file_create "nmap" "fragments.log.bak"
-        cache_tools_file_create "nmap" "ports_tcp.log.bak"
-        cache_tools_file_create "nmap" "ports_udp.log.bak"
-        fragment_cache_file=$(cache_tools_file_getPath "nmap" "fragments.log.bak")
-        tcp_ports_cache_file=$(cache_tools_file_getPath "nmap" "ports_tcp.log.bak")
-        udp_ports_cache_file=$(cache_tools_file_getPath "nmap" "ports_udp.log.bak")
-    
-        (nmap_fragment "$fragment_cache_file") &
-        processesPid+=($!)
+        for mode in "${modes[@]}"; do
+            cache_tools_file_create "nmap" "${mode}.log.bak"
+        done
 
-        (nmap_tcp_ports "$tcp_ports_cache_file") &
-        processesPid+=($!)
+        declare -A cache_files
+        
+        for mode in "${modes[@]}"; do
+            cache_files[$mode]=$(cache_tools_file_getPath "nmap" "${mode}.log.bak")
+        done
 
-        (nmap_udp_ports "$udp_ports_cache_file") &
-        processesPid+=($!)
+        for mode in "${modes[@]}"; do
+            (nmap_scan_mode "$mode" "${cache_files[$mode]}") &
+            processesPid+=($!)
+        done
 
         function checkProcessesIsRunning() {
             tput rc
 
-            for file in "$fragment_cache_file" "$tcp_ports_cache_file" "$udp_ports_cache_file"; do
-                tput el 
-                content=$(tail -n 1 "$file")
-                
+            for mode in "${modes[@]}"; do
+                tput el
+                content=$(tail -n 1 "${cache_files[$mode]}")
+
                 if [[ -n "$content" ]]; then
                     echo -ne "$content\n"
                 else
@@ -219,8 +265,8 @@ function start_nmap_scan() {
                 fi
             done
 
-            for processPid in "${processesPid[@]}"; do
-                if kill -0 "$processPid" 2>/dev/null; then
+            for pid in "${processesPid[@]}"; do
+                if kill -0 "$pid" 2>/dev/null; then
                     return 0
                 fi
             done
@@ -235,12 +281,17 @@ function start_nmap_scan() {
         done
 
         checkProcessesIsRunning
-        rm "$fragment_cache_file" "$tcp_ports_cache_file" "$udp_ports_cache_file"
+
+        for mode in "${modes[@]}"; do
+            rm -f "${cache_files[$mode]}"
+        done
+
         return 0
     fi
 
-    nmap_fragment
-    nmap_tcp_ports
-    nmap_udp_ports
+    for mode in "${modes[@]}"; do
+        nmap_scan_mode "$mode"
+    done
+
     return 0
 }
