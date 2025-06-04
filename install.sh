@@ -13,30 +13,41 @@ fi
 
 if ! command -v jq &> /dev/null; then
     echo -e "${YELLOW}[+]${NC} Installing jq..."
-    sudo apt update -y
-    sudo apt install -y jq
+    apt update -y
+    apt install -y jq
 fi
 
-BIN="bascan-linux_x64"
-URL=$(curl -s https://api.github.com/repos/BeerlD/Bascan/releases/latest | jq -r ".assets[] | select(.name==\"$BIN\") | .browser_download_url")
+echo -e "${YELLOW}[+]${NC} Fetching latest release info..."
+API_URL="https://api.github.com/repos/BeerlD/bascan/releases/latest"
+TARBALL_URL=$(curl -s "$API_URL" | jq -r '.tarball_url')
 
-if [ -z "$URL" ]; then
-    echo -e "${RED}[-]${NC} Error: Could not retrieve the file URL. Please try again later."
+if [ -z "$TARBALL_URL" ] || [ "$TARBALL_URL" == "null" ]; then
+    echo -e "${RED}[-]${NC} Error: Could not retrieve the tarball URL from GitHub."
     exit 1
 fi
 
-echo -e "${YELLOW}[+]${NC} Downloading $BIN..."
-wget -O "/usr/local/bin/$BIN" "$URL" &> /dev/null
-mv -f "/usr/local/bin/$BIN" "/usr/local/bin/bascan"
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR" || exit 1
 
-if [ ! -f "/usr/local/bin/bascan" ]; then
-    echo -e "${RED}[-]${NC} Error: Download failed. Check your connection or try again later."
+echo -e "${YELLOW}[+]${NC} Downloading latest release tarball..."
+curl -sL "$TARBALL_URL" -o source.tar.gz
+
+if [ ! -f source.tar.gz ]; then
+    echo -e "${RED}[-]${NC} Error: Failed to download the tarball."
     exit 1
 fi
 
-chmod +x "/usr/local/bin/bascan"
+INSTALL_DIR="/usr/local/bin/bascan"
+rm -rf "$INSTALL_DIR"
 
-export PATH=$PATH:/usr/local/bin
-echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
+echo -e "${YELLOW}[+]${NC} Extracting source to $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
+tar -xzf source.tar.gz --strip-components=1 -C "$INSTALL_DIR"
 
-echo -e "${YELLOW}[+]${NC} bascan has been successfully installed (/usr/local/bin/)."
+if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
+    echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
+    export PATH=$PATH:/usr/local/bin
+fi
+
+echo -e "${YELLOW}[+]${NC} Bascan has been successfully installed to $INSTALL_DIR."
+rm -rf "$TMP_DIR"
