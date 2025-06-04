@@ -7,7 +7,7 @@ NC='\033[0m'
 echo -e "${YELLOW}[+]${NC} Installing bascan..."
 
 REPO="BeerlD/Bascan"
-BIN="bascan"
+BIN="bascan-linux_x64"
 VERSION="latest"
 
 URL=$(curl -s https://api.github.com/repos/$REPO/releases/$VERSION | grep "browser_download_url.*$BIN" | cut -d '"' -f 4)
