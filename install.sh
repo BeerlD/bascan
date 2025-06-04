@@ -44,8 +44,9 @@ echo -e "${YELLOW}[+]${NC} Extracting to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
 tar -xzf source.tar.gz --strip-components=1 -C "$INSTALL_DIR"
 
-chmod +x "$INSTALL_DIR/bascan.sh"
-ln -sf "$INSTALL_DIR/bascan.sh" /usr/local/bin/bascan
+SCRIPT="$INSTALL_DIR/bascan.sh"
+chmod +x "$SCRIPT"
+ln -sf "$SCRIPT" /usr/local/bin/bascan
 
 echo -e "${YELLOW}[+]${NC} Bascan has been successfully installed to $INSTALL_DIR."
 rm -rf "$TMP_DIR"
