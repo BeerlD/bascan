@@ -1,13 +1,16 @@
 tools_cache_folder="tools_cache"
 
-function cache_folder_create() {
-    if  [[ -f bascan_configs.sh ]]; then
+cache_folder_create() {
+    tools_cache_folder="tools_cache"
+
+    if [[ -f bascan_configs.sh ]]; then
         source ./bascan_configs.sh
 
-        if [[ ! -d "$main_folder" ]]; then
+        if [[ "$#" -eq 1 && "$1" == true ]]; then
+            main_folder="bascan_$(date +%Y-%m-%d_%H:%M:%S)"
             mkdir -p "$main_folder/$tools_cache_folder"
-        elif [[ "$#" -eq 1 && "$1" == true ]]; then
-            rm -rf -- "$main_folder"
+            sed -i "s|^main_folder=.*|main_folder=\"$main_folder\" # Folder of logs|" bascan_configs.sh
+        elif [[ ! -d "$main_folder" ]]; then
             mkdir -p "$main_folder/$tools_cache_folder"
         fi
 
@@ -16,11 +19,17 @@ function cache_folder_create() {
 
     main_folder="bascan_$(date +%Y-%m-%d_%H:%M:%S)"
     mkdir -p "$main_folder/$tools_cache_folder"
-    echo "main_folder=\"$main_folder\" # Folder of logs" > bascan_configs.sh
-    echo "intensity=\"normal\"" >> bascan_configs.sh
-    echo "multitrhead=false" >> bascan_configs.sh
-    echo "fastmode=false" >> bascan_configs.sh
+
+    cat > bascan_configs.sh <<EOF
+main_folder="$main_folder" # Folder of logs
+tools_cache_folder="$tools_cache_folder"
+intensity="normal"
+multitrhead=false
+fastmode=false
+new_cache_folder=false
+EOF
 }
+
 
 function cache_tools_file_create() {
     # $1 -> folder name
