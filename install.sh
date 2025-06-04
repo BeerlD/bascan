@@ -5,7 +5,8 @@ RED='\033[1;31m'
 NC='\033[0m'
 
 echo -e "${YELLOW}[+]${NC} Installing Bascan..."
-sudo apt update && sudo apt install -y jq
+sudo apt update -y
+sudo apt install -y jq
 
 BIN="bascan-linux_x64"
 URL=$(curl -s https://api.github.com/repos/BeerlD/Bascan/releases/latest | jq -r ".assets[] | select(.name==\"$BIN\") | .browser_download_url")
