@@ -6,6 +6,12 @@ function dig_perform_result() {
     vulnerabilitiesCount_out=0
 
     function registerVulnerability() {
+        # $1 -> message
+        # $2 -> level
+        #   0 -> warning
+        #   1 -> error
+        #   2 -> severe vulnerability
+        
         for vulnerability in "${vulnerabilities[@]}"; do
             if [[ "$vulnerability" == "$1" ]]; then
                 return 1
@@ -17,24 +23,25 @@ function dig_perform_result() {
         return 0
     }
 
-    if [[ ! -s "$file_path" ]] || grep -qE 'no servers could be reached|connection.*failed' "$file_path"; then
+    if [[ ! -s "$file_path" ]] || grep -qEi 'no servers could be reached|connection.*failed' "$file_path"; then
         return 1
     fi
 
     local has_records=$(grep -v '^;' "$file_path" | grep -cE 'IN\s+(A|AAAA|MX|TXT|CNAME|NS|SOA)')
-
+    
     if [[ "$has_records" -eq 0 ]]; then
-        registerVulnerability "(DNS) No DNS records found in dig output."
+        registerVulnerability "(DNS) No DNS records found in dig output." 1
     fi
 
     local ttl_zero_count=$(awk '/IN/ && $2 == 0' "$file_path" | wc -l)
+    
     if (( ttl_zero_count > 0 )); then
-        registerVulnerability "(DNS) TTL is zero for some records (not recommended)."
+        registerVulnerability "(DNS) TTL is zero for some records (not recommended)." 1
     fi
 
     if grep -qE 'IN\s+TXT' "$file_path"; then
         if grep -qE 'v=spf1\s+~all' "$file_path"; then
-            registerVulnerability "(DNS) SPF record uses ~all (softfail), consider using -all (fail)."
+            registerVulnerability "(DNS) SPF record uses ~all (softfail), consider using -all (fail)." 0
         fi
     fi
 
@@ -42,7 +49,7 @@ function dig_perform_result() {
         local mx_records=$(grep -E 'IN\s+MX' "$file_path" | awk '{print $NF}')
         for mx in $mx_records; do
             if [[ "$mx" == *"gmail.com." || "$mx" == *"outlook.com." ]]; then
-                registerVulnerability "(DNS) MX record points to public email provider ($mx)."
+                registerVulnerability "(DNS) MX record points to public email provider ($mx)." 0
             fi
         done
     fi

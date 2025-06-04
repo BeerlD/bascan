@@ -6,6 +6,13 @@ function whois_perform_result() {
     vulnerabilitiesCount_out=0
 
     function registerVulnerability() {
+        # $1 -> message
+        # $1 -> message
+        # $2 -> level
+        #   0 -> warning
+        #   1 -> error
+        #   2 -> severe vulnerability
+        
         for vulnerability in "${vulnerabilities[@]}"; do
             if [[ "$vulnerability" == "$1" ]]; then
                 return 1
@@ -25,26 +32,26 @@ function whois_perform_result() {
         days_left=$(( (exp_seconds - now_seconds) / 86400 ))
 
         if (( days_left < 90 )); then
-            registerVulnerability "(Domain) Expiration approaching: $days_left days remaining."
+            registerVulnerability "(Domain) Expiration approaching: $days_left days remaining." 0
         fi
     fi
 
     if ! grep -qi 'DNSSEC: signed' "$file_path"; then
-        registerVulnerability "(Domain) DNSSEC missing or not enabled."
+        registerVulnerability "(Domain) DNSSEC missing or not enabled." 1
     fi
 
     if grep -qi 'Registrant Name:' "$file_path"; then
         if ! grep -qi 'Not Disclosed\|REDACTED' "$file_path"; then
-            registerVulnerability "(Domain) Registrant information visible (no privacy protection)."
+            registerVulnerability "(Domain) Registrant information visible (no privacy protection)." 0
         fi
     fi
 
     if grep -qiE 'redemptionPeriod|pendingDelete|clientHold' "$file_path"; then
-        registerVulnerability "(Domain) Status indicates possible inactivity or legal issues."
+        registerVulnerability "(Domain) Status indicates possible inactivity or legal issues." 2
     fi
 
     if ! grep -qiE 'Registrar: (GoDaddy|CSC|MarkMonitor|NameCheap|Google)' "$file_path"; then
-        registerVulnerability "(Domain) Registrar may not be recognized as trustworthy."
+        registerVulnerability "(Domain) Registrar may not be recognized as trustworthy." 0
     fi
 }
 
