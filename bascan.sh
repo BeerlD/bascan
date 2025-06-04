@@ -105,6 +105,7 @@ while true; do
                 start_dig_scan
                 start_whois_scan
             elif [[ "${lowerUserInput:5}" == "all" ]]; then
+                cache_folder_create true
                 start_dig_scan
                 start_whois_scan
                 start_nmap_scan
