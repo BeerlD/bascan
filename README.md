@@ -25,7 +25,7 @@ A tool for retrieving registration information of domains and IP addresses. Disp
 | Kali-Linux             | :white_check_mark:      |
 
 ```sh
-bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
 ```
 
 ### Build
