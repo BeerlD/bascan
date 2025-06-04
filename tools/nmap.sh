@@ -191,24 +191,19 @@ function nmap_scan_mode() {
             scan_params+=("-sU")
             ;;
 
-        quick)
-            title="Quick Scan"
-            scan_params+=("-T4" "-F" "-sV")
-            ;;
-
         full_tcp)
             title="Full TCP Scan"
-            scan_params+=("-p-" "-sV" "-T4")
+            scan_params+=("-p-" "-sV")
             ;;
 
         full_udp)
             title="Full UDP Scan"
-            scan_params+=("-p-" "-sU" "-T4")
+            scan_params+=("-p-" "-sU")
             ;;
 
         os_detect)
             title="OS Detection"
-            scan_params+=("-O" "-T4")
+            scan_params+=("-O")
             ;;
 
         *)
@@ -231,7 +226,13 @@ function start_nmap_scan() {
 
     source ././bascan_configs.sh
 
-    local modes=("fragment" "tcp" "udp" "quick" "full_tcp" "full_udp" "os_detect")
+    local modes=("fragment")
+
+    if [[ "$intensity" == "insane" || "$intensity" == "aggressive" ]]; then
+        modes+=("full_tcp" "full_udp" "os_detect")
+    else
+        modes+=("tcp" "udp")
+    fi
 
     if [[ "$multitrhead" == true ]]; then
         processesPid=()
@@ -241,7 +242,7 @@ function start_nmap_scan() {
         done
 
         declare -A cache_files
-        
+
         for mode in "${modes[@]}"; do
             cache_files[$mode]=$(cache_tools_file_getPath "nmap" "${mode}.log.bak")
         done
