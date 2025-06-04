@@ -128,7 +128,7 @@ while true; do
 
     if [[ "$lowerUserInput" == "install" || "$lowerUserInput" =~ ^install\  ]]; then
         if [[ "${#userInput}" -ge 8 ]]; then
-            packages_to_install=("python3" "python3-httpx" "nmap" "nikto")
+            packages_to_install=("nmap" "whois")
             package_selected="${lowerUserInput:8}"
             findedPackage=0
 
@@ -179,6 +179,7 @@ while true; do
         echo "  Packages:"
         echo "    all - Install all packages."
         echo "    nmap - Network scanner, identifier of active hosts, open ports, services and operating systems."
+        echo "    whois - A tool for retrieving registration information of domains and IP addresses."
         echo ""
         continue
     fi
