@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "\e[31m[-]\e[0m Error: This script must be run as root (use sudo)."
+    exit 1
+fi
+
 if [ $# -eq 0 ]; then
     echo -e "\e[31m[-]\e[0m No host avaliable."
     exit 0
