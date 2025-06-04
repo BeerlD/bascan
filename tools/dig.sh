@@ -62,7 +62,7 @@ function start_dig_scan() {
     local found_total=0
 
     for type in "${types[@]}"; do
-        local filename="dig_${type}.txt"
+        local filename="${type}.log"
         cache_tools_file_create "dig" "$filename"
         local cache_file_path=$(cache_tools_file_getPath "dig" "$filename")
 
