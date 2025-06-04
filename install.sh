@@ -6,11 +6,8 @@ NC='\033[0m'
 
 echo -e "${YELLOW}[+]${NC} Installing bascan..."
 
-REPO="BeerlD/Bascan"
 BIN="bascan-linux_x64"
-VERSION="latest"
-
-URL=$(curl -s https://api.github.com/repos/$REPO/releases/$VERSION | grep "browser_download_url.*$BIN" | cut -d '"' -f 4)
+URL=$(curl -s https://api.github.com/repos/BeerlD/Bascan/releases/latest | grep "browser_download_url.*$BIN" | cut -d '"' -f 4)
 
 if [ -z "$URL" ]; then
     echo -e "${RED}[-]${NC} Error: try again in a few minutes."
