@@ -4,14 +4,17 @@ function cache_folder_create() {
     if  [[ -f bascan_configs.sh ]]; then
         source ./bascan_configs.sh
 
-        if [[ ! -f "$main_folder" ]]; then
+        if [[ ! -d "$main_folder" ]]; then
+            mkdir -p "$main_folder/$tools_cache_folder"
+        elif [[ "$#" -eq 1 && "$1" == true ]]; then
+            rm -rf -- "$main_folder"
             mkdir -p "$main_folder/$tools_cache_folder"
         fi
 
         return 0
     fi
 
-    main_folder="bascan_$(date +%Y%m%d%H%M%S)"
+    main_folder="bascan_$(date +%Y-%m-%d_%H:%M:%S)"
     mkdir -p "$main_folder/$tools_cache_folder"
     echo "main_folder=\"$main_folder\" # Folder of logs" > bascan_configs.sh
     echo "intensity=\"normal\"" >> bascan_configs.sh
