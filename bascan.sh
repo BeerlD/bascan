@@ -35,7 +35,7 @@ function close() {
 
     if [[ "$#" -ge 1 && "$1" -eq 1 ]]; then
         script_path="$(realpath "$0")"
-        exec "$script_path" "$@"
+        exec "$script_path" "$1"
     fi
 
     exit 1
@@ -44,6 +44,7 @@ function close() {
 # ======== VARIABLES / CONSTANTS
 source ./lib/colors.sh
 source ./modules/cache.sh
+source ./INCLUDE.sh
 source ./tools/INCLUDE.sh
 
 chmod +x scripts/pidstat.sh
@@ -85,19 +86,31 @@ while true; do
         close "1"
     fi
 
+    if [[ "$lowerUserInput" == "vuln" ]]; then
+        for vulnerability in "${vulnerabilities[@]}"; do
+            echo -e "$vulnerability"
+        done
+
+        continue
+    fi
+
     if [[ "$lowerUserInput" == "scan" || "$lowerUserInput" =~ ^scan\  ]]; then
         if [[ "${#userInput}" -ge 5 ]]; then
-            if [[ "${lowerUserInput:5}" == "ports" ]]; then
-                start_nmap_scan
-                continue
-            fi
+            vulnerabilities=()
+            vulnerabilities_level=()
 
-            if [[ "${lowerUserInput:5}" == "all" ]]; then
+            if [[ "${lowerUserInput:5}" == "network" ]]; then
+                start_nmap_scan
+            elif [[ "${lowerUserInput:5}" == "informations" ]]; then
+                start_dig_scan
+                start_whois_scan
+            elif [[ "${lowerUserInput:5}" == "all" ]]; then
                 start_dig_scan
                 start_whois_scan
                 start_nmap_scan
-                continue
             fi
+
+            continue
         fi
 
         if [[ "$lowerUserInput" != "scan" ]]; then
@@ -106,8 +119,8 @@ while true; do
         
         echo -e "\nUsage: scan <operation>"
         echo "  Operations:"
-        echo "    ports - scan ports vulnerabilities"
-        echo "    subdomains - scan subdomains vulnerabilities"
+        echo "    network - scan network vulnerabilities"
+        echo "    informations - scan public informations"
         echo ""
         continue
     fi
