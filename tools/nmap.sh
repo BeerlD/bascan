@@ -22,7 +22,7 @@ function setScanParams() {
         scan_params+=("-F")
     fi
 
-    _out=("${scan_params[@]}")  # Atribui à variável de saída
+    _out=("${scan_params[@]}")
 }
 
 function nmap_getCPUNetworkUsage() {
@@ -101,8 +101,8 @@ function nmap_fragment() {
     # [optional] $1  -> output
     local outputfile="$1"
 
-    cache_tools_file_create "nmap_logs" "fragments_packets.txt"
-    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "fragments_packets.txt")
+    cache_tools_file_create "nmap" "fragments_packets.log"
+    local cache_file_path=$(cache_tools_file_getPath "nmap" "fragments_packets.log")
 
     source ././bascan_configs.sh
 
@@ -125,8 +125,8 @@ function nmap_tcp_ports() {
     # [optional] $1  -> output
     local outputfile="$1"
 
-    cache_tools_file_create "nmap_logs" "ports_tcp.txt"
-    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_tcp.txt")
+    cache_tools_file_create "nmap" "ports_tcp.log"
+    local cache_file_path=$(cache_tools_file_getPath "nmap" "ports_tcp.log")
 
     source ././bascan_configs.sh
 
@@ -153,8 +153,8 @@ function nmap_udp_ports() {
     # [optional] $1  -> output
     local outputfile="$1"
 
-    cache_tools_file_create "nmap_logs" "ports_udp.txt"
-    local cache_file_path=$(cache_tools_file_getPath "nmap_logs" "ports_udp.txt")
+    cache_tools_file_create "nmap" "ports_udp.log"
+    local cache_file_path=$(cache_tools_file_getPath "nmap" "ports_udp.log")
 
     source ././bascan_configs.sh
 
@@ -189,12 +189,12 @@ function start_nmap_scan() {
     if [[ "$multitrhead" == true ]]; then
         processesPid=()
 
-        cache_tools_file_create "nmap_results" "fragments.txt"
-        cache_tools_file_create "nmap_results" "ports_tcp.txt"
-        cache_tools_file_create "nmap_results" "ports_udp.txt"
-        fragment_cache_file=$(cache_tools_file_getPath "nmap_results" "fragments.txt")
-        tcp_ports_cache_file=$(cache_tools_file_getPath "nmap_results" "ports_tcp.txt")
-        udp_ports_cache_file=$(cache_tools_file_getPath "nmap_results" "ports_udp.txt")
+        cache_tools_file_create "nmap" "fragments.log.bak"
+        cache_tools_file_create "nmap" "ports_tcp.log.bak"
+        cache_tools_file_create "nmap" "ports_udp.log.bak"
+        fragment_cache_file=$(cache_tools_file_getPath "nmap" "fragments.log.bak")
+        tcp_ports_cache_file=$(cache_tools_file_getPath "nmap" "ports_tcp.log.bak")
+        udp_ports_cache_file=$(cache_tools_file_getPath "nmap" "ports_udp.log.bak")
     
         (nmap_fragment "$fragment_cache_file") &
         processesPid+=($!)
@@ -234,6 +234,8 @@ function start_nmap_scan() {
             sleep 0.1
         done
 
+        checkProcessesIsRunning
+        rm "$fragment_cache_file" "$tcp_ports_cache_file" "$udp_ports_cache_file"
         return 0
     fi
 
