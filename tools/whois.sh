@@ -88,8 +88,11 @@ function start_whois_scan() {
     run_whois_mode "combined_HQ" "-H -Q"
     run_whois_mode "combined_BQ" "-B -Q"
     run_whois_mode "combined_HBQ" "-H -B -Q"
-    run_whois_mode "country_code_us" "-c us"
-    run_whois_mode "country_code_br" "-c br"
     run_whois_mode "verisign" "--host whois.verisign-grs.com"
     run_whois_mode "iana" "--host whois.iana.org"
+
+    if [[ "$intensity" == "aggressive" || "$intensity" == "insane" ]]; then
+        run_whois_mode "country_code_us" "-c us"
+        run_whois_mode "country_code_br" "-c br"
+    fi
 }
