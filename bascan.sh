@@ -219,7 +219,7 @@ while true; do
                             if [[ "$match" == false ]]; then
                                 echo -e "${RED}ERROR${NC} Invalid option value: '$value'."
                             else
-                                cache_config_file_setValue 2 "\"$value\""
+                                cache_config_file_setValue 3 "\"$value\""
                                 echo -e "${GREEN}SETTED${NC} option intensity setted to: '$value'."
                                 echo ""
                                 continue
@@ -230,8 +230,30 @@ while true; do
                             value="${option:12}"
 
                             if [[ "$value" == "true" || "$value" == "false" ]]; then
-                                cache_config_file_setValue 3 "$value"
+                                cache_config_file_setValue 4 "$value"
                                 echo -e "${GREEN}SETTED${NC} option multithread setted to: '$value'."
+                                echo ""
+                                continue
+                            fi
+                        fi
+                    elif [[ "$option" =~ ^fastmode ]]; then
+                        if [[ "$option" != "fastmode" ]]; then
+                            value="${option:9}"
+
+                            if [[ "$value" == "true" || "$value" == "false" ]]; then
+                                cache_config_file_setValue 5 "$value"
+                                echo -e "${GREEN}SETTED${NC} option fastmode setted to: '$value'."
+                                echo ""
+                                continue
+                            fi
+                        fi
+                    elif [[ "$option" =~ ^new_cache_folder ]]; then
+                        if [[ "$option" != "new_cache_folder" ]]; then
+                            value="${option:17}"
+
+                            if [[ "$value" == "true" || "$value" == "false" ]]; then
+                                cache_config_file_setValue 6 "$value"
+                                echo -e "${GREEN}SETTED${NC} option new_cache_folder setted to: '$value'."
                                 echo ""
                                 continue
                             fi
@@ -252,9 +274,9 @@ while true; do
                 echo "    * normal     - Balanced speed and discretion (default, recommended)."
                 echo "    * aggressive - Speeds up scanning, ideal for fast networks with no security restrictions."
                 echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls."
-                echo "  fastmode - Fast mode, scan fewer vulnerabilities."
-                echo "  multithread - Scan asynchronously."
-                echo "  new_cache_folder - Creates a new cache folder with each scan."
+                echo "  fastmode - Fast mode, scan fewer vulnerabilities (true to enable, false to disable)."
+                echo "  multithread - Scan asynchronously (true to enable, false to disable)."
+                echo "  new_cache_folder - Creates a new cache folder with each scan (true to enable, false to disable)."
                 echo ""
                 continue
             fi
