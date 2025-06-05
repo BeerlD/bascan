@@ -5,9 +5,15 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-if [ $# -eq 0 ]; then
-    echo -e "\e[31m[-]\e[0m No host avaliable."
+
+if [ "$#" -eq 0 ]; then
+    echo -e "\e[31m[-]\e[0m No host or command was specified."
     exit 0
+fi
+
+if [ "$1" == "update" ]; then
+    sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
+    exit 1
 fi
 
 if ! command -v toilet >/dev/null 2>&1 || ! command -v figlet >/dev/null 2>&1; then 
