@@ -37,7 +37,7 @@ if [ ! -f source.tar.gz ]; then
     exit 1
 fi
 
-INSTALL_DIR="/usr/local/bin/bascan"
+INSTALL_DIR="/usr/local/bin/bascan_source"
 rm -rf "$INSTALL_DIR"
 
 echo -e "${YELLOW}[+]${NC} Extracting to $INSTALL_DIR..."
