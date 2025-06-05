@@ -5,15 +5,65 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+declare -g HOST
+HOST=""
 
-if [ "$#" -eq 0 ]; then
-    echo -e "\e[31m[-]\e[0m No host or command was specified."
+#!/bin/bash
+
+HOST=""
+
+function help_message() {
+    echo "
+Bascan (https://github.com/BeerlD/bascan)
+Copyright (c) 2025 BeerlD
+
+Examples:   
+    bascan [Options] <host>
+    bascan [Options] -h <host>
+    bascan [Options] --host <host>
+    bascan [Command]
+
+Options:
+    --host, -h : The host or target to be analyzed.
+
+Commands:
+    update : Update to latest version.
+    "
+}
+
+for ((argIndex=0; argIndex<$#; argIndex++)); do
+    eval "arg=\${$((argIndex+1))}"
+
+    if [ "$arg" == "update" ]; then
+        sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
+        exit 1
+    fi
+
+    if [ "$arg" == "--help" ]; then
+        help_message
+        exit 1
+    fi
+
+    if [[ ("$arg" == "--host" || "$arg" == "-h") && $((argIndex+2)) -le $# ]]; then
+        eval "HOST=\${$((argIndex+2))}"
+        ((argIndex++))
+        continue
+    fi
+
+    if [[ -n "$HOST" || "$arg" =~ ^- ]]; then
+        echo -e "\n\e[31m[-]\e[0m Invalid option: '$arg'."
+        help_message
+        exit 0
+    fi
+
+    HOST="$arg"
+done
+
+unset -f help_message
+
+if [ ! -n "$HOST" ]; then
+    echo -e "\e[31m[-]\e[0m No host was specified."
     exit 0
-fi
-
-if [ "$1" == "update" ]; then
-    sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
-    exit 1
 fi
 
 if ! command -v toilet >/dev/null 2>&1 || ! command -v figlet >/dev/null 2>&1; then 
