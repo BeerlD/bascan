@@ -136,16 +136,17 @@ while true; do
 
             if [[ "${lowerUserInput:5}" == "network" ]]; then
                 start_nmap_scan
+                continue
             elif [[ "${lowerUserInput:5}" == "informations" ]]; then
                 start_dig_scan
                 start_whois_scan
+                continue
             elif [[ "${lowerUserInput:5}" == "all" ]]; then
                 start_dig_scan
                 start_whois_scan
                 start_nmap_scan
+                continue
             fi
-
-            continue
         fi
 
         if [[ "$lowerUserInput" != "scan" ]]; then
