@@ -1,4 +1,4 @@
-source ././INCLUDE.sh
+source "$SCRIPT_DIR/INCLUDE.sh"
 
 function setScanParams() {
     # $1 -> var out 
@@ -6,7 +6,7 @@ function setScanParams() {
     local -n _out=$1
     local scan_params=()
 
-    source ././bascan_configs.sh
+    source ./bascan_configs.sh
 
     case "$intensity" in
         "slowly") scan_params+=("-T0" "--max-rate" "5") ;;
@@ -166,7 +166,7 @@ function nmap_scan_mode() {
     cache_tools_file_create "nmap" "${mode}.log"
     local cache_file_path=$(cache_tools_file_getPath "nmap" "${mode}.log")
 
-    source ././bascan_configs.sh
+    source ./bascan_configs.sh
     setScanParams scan_params
 
     case "$mode" in
@@ -224,7 +224,7 @@ function nmap_scan_mode() {
 function start_nmap_scan() {
     echo -e "${YELLOW}[+]${NC} Starting ${CYAN}nmap${NC} scan: ${YELLOW}$HOST${NC}... [PRESS ENTER TO VIEW/UPDATE PROGRESS]"
 
-    source ././bascan_configs.sh
+    source ./bascan_configs.sh
 
     local modes=("fragment")
 

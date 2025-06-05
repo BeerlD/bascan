@@ -1,6 +1,6 @@
-source ././lib/colors.sh
-source ././modules/cache.sh
-source ././modules/utils.sh
+source "$SCRIPT_DIR/lib/colors.sh"
+source "$SCRIPT_DIR/modules/cache.sh"
+source "$SCRIPT_DIR/modules/utils.sh"
 
 export HOST=$1
 export ports_scanned=()

@@ -1,4 +1,4 @@
-source ././lib/colors.sh
+source "$SCRIPT_DIR/lib/colors.sh"
 
 utils_message_loading_pid() {
     # $1 -> pid

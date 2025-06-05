@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ././lib/colors.sh
+source "$SCRIPT_DIR/lib/colors.sh"
 
 PID=$1
 LOG_FILE=$2

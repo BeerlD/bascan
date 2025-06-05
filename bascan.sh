@@ -47,10 +47,22 @@ function close() {
 }
 
 # ======== VARIABLES / CONSTANTS
-source ./lib/colors.sh
-source ./modules/cache.sh
-source ./INCLUDE.sh
-source ./tools/INCLUDE.sh
+
+SOURCE="${BASH_SOURCE[0]}"
+
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+
+declare -g SCRIPT_DIR
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+
+source "$SCRIPT_DIR/lib/colors.sh"
+source "$SCRIPT_DIR/modules/cache.sh"
+source "$SCRIPT_DIR/INCLUDE.sh"
+source "$SCRIPT_DIR/tools/INCLUDE.sh"
 
 chmod +x scripts/pidstat.sh
 

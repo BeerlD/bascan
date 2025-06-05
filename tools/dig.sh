@@ -1,4 +1,4 @@
-source ././INCLUDE.sh
+source "$SCRIPT_DIR/INCLUDE.sh"
 
 function dig_perform_result() {
     local file_path="$1"
