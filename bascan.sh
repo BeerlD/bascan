@@ -140,7 +140,7 @@ while true; do
     fi
 
     if [[ "$userInput" == "exit" ]]; then
-        break
+        close
     fi
 
     if [[ "$lowerUserInput" == "clear" ]]; then
@@ -199,10 +199,9 @@ while true; do
            echo -e "${RED}ERROR${NC} Invalid scan operation: '${userInput:5}'."
         fi
         
-        echo -e "\nUsage: scan <operation>"
-        echo "  Operations:"
-        echo "    network - scan network vulnerabilities"
-        echo "    informations - scan public informations"
+        echo -e "• Usage ${BLUE}─>${NC} scan <operation>"
+        echo "${BLUE}╰─>${NC} network      ${BLUE}─>${NC} Scan network vulnerabilities."
+        echo "${BLUE}╰─>${NC} informations ${BLUE}─>${NC} Scan public informations."
         echo ""
         continue
     fi
@@ -256,11 +255,10 @@ while true; do
            echo -e "${RED}ERROR${NC} Invalid package: '${userInput:8}'."
         fi
 
-        echo -e "\nUsage: install <package>"
-        echo "  Packages:"
-        echo "    all - Install all packages."
-        echo "    nmap - Network scanner, identifier of active hosts, open ports, services and operating systems."
-        echo "    whois - A tool for retrieving registration information of domains and IP addresses."
+        echo -e "• Usage ${BLUE}─>${NC} install <package>"
+        echo "${BLUE}╰─>${NC} all   ${BLUE}─>${NC} Install all packages."
+        echo "${BLUE}╰─>${NC} nmap  ${BLUE}─>${NC} Network scanner, identifier of active hosts, open ports, services and operating systems."
+        echo "${BLUE}╰─>${NC} whois ${BLUE}─>${NC} A tool for retrieving registration information of domains and IP addresses."
         echo ""
         continue
     fi
@@ -333,18 +331,18 @@ while true; do
                     fi
                 fi
 
-                echo -e "\nUsage: option set <option> <value>"
-                echo "Options:"
-                echo "  intensity"
-                echo "    * slowly     - Sends packets extremely slowly, useful for avoiding detection by IDS/IPS."
-                echo "    * low        - A little faster than slowly, but still very discreet to avoid security alarms."
-                echo "    * middle     - Reduces bandwidth and CPU usage, useful for congested networks."
-                echo "    * normal     - Balanced speed and discretion (default, recommended)."
-                echo "    * aggressive - Speeds up scanning, ideal for fast networks with no security restrictions."
-                echo "    * insane     - Maximum speed, can overload the network and be easily detected by firewalls."
-                echo "  fastmode - Fast mode, scan fewer vulnerabilities (true to enable, false to disable)."
-                echo "  multithread - Scan asynchronously (true to enable, false to disable)."
-                echo "  new_cache_folder - Creates a new cache folder with each scan (true to enable, false to disable)."
+                echo -e "• Usage ${BLUE}─>${NC} option set <option> <value>"
+                echo "${BLUE}╰─>${NC} • Options:"
+                echo "    ${BLUE}╰─>${NC} • intensity <value>"
+                echo "        ${BLUE}╰─>${NC} slowly     ${BLUE}─>${NC} Sends packets extremely slowly, useful for avoiding detection by IDS/IPS."
+                echo "        ${BLUE}╰─>${NC} low        ${BLUE}─>${NC} A little faster than slowly, but still very discreet to avoid security alarms."
+                echo "        ${BLUE}╰─>${NC} middle     ${BLUE}─>${NC} Reduces bandwidth and CPU usage, useful for congested networks."
+                echo "        ${BLUE}╰─>${NC} normal     ${BLUE}─>${NC} Balanced speed and discretion (default, recommended)."
+                echo "        ${BLUE}╰─>${NC} aggressive ${BLUE}─>${NC} Speeds up scanning, ideal for fast networks with no security restrictions."
+                echo "        ${BLUE}╰─>${NC} insane     ${BLUE}─>${NC} Maximum speed, can overload the network and be easily detected by firewalls."
+                echo "    ${BLUE}╰─>${NC} fastmode         ${BLUE}─>${NC} Fast mode, scan fewer vulnerabilities (true to enable, false to disable)."
+                echo "    ${BLUE}╰─>${NC} multithread      ${BLUE}─>${NC} Scan asynchronously (true to enable, false to disable)."
+                echo "    ${BLUE}╰─>${NC} new_cache_folder ${BLUE}─>${NC} Creates a new cache folder with each scan (true to enable, false to disable)."
                 echo ""
                 continue
             fi
@@ -358,23 +356,55 @@ while true; do
             continue
         fi
 
-        echo -e "\nUsage: option <operation> [...]"
-        echo "  Operations:"
-        echo "    set <option> <value> - set an option value"
-        echo "    show - show options"
+        echo -e "• Usage ${BLUE}─>${NC} option <operation> [...]"
+        echo "${BLUE}╰─>${NC} • Operations:"
+        echo "    ${BLUE}╰─>${NC} set <option> <value> ${BLUE}─>${NC} set an option value"
+        echo "    ${BLUE}╰─>${NC} show                 ${BLUE}─>${NC} show options"
         echo ""
         continue
     fi
 
     if [[ "$lowerUserInput" == "help" ]]; then
-        echo -e "Commands:
-   install : Install packages and tools.
-   scan    : Run scan on host.
-   kill    : Interrupt the bascan process.
-   option  : Manage scanning and preferences options.
-   vuln    : Show vulnerabilities found after a scan.
-   help    : Show this message.
+        echo -e "• Commands:
+${BLUE}╰─>${NC} install ${BLUE}─>${NC} Install packages and tools.
+${BLUE}╰─>${NC} scan    ${BLUE}─>${NC} Run scan on host.
+${BLUE}╰─>${NC} kill    ${BLUE}─>${NC} Interrupt the bascan process.
+${BLUE}╰─>${NC} option  ${BLUE}─>${NC} Manage scanning and preferences options.
+${BLUE}╰─>${NC} vuln    ${BLUE}─>${NC} Show vulnerabilities found after a scan.
+${BLUE}╰─>${NC} lucid   ${BLUE}─>${NC} Run the Lucid DDos attack script (you are responsible for its use).
+${BLUE}╰─>${NC} help    ${BLUE}─>${NC} Show this message.
         "
+        continue
+    fi
+
+    if [[ "$lowerUserInput" == "lucid" ]]; then
+        echo -ne "${YELLOW}[+]${NC} Installing ${CYAN}python3${NC} and ${CYAN}python3-pip${NC}... "
+
+        if ! sudo apt install python3 python3-pip > /dev/null 2>&1; then
+            echo -e "${RED}Error${NC}.\n"
+            continue
+        fi
+
+        echo -e "${GREEN}Done${NC}."
+        echo -ne "${YELLOW}[+]${NC} Installing packages ${CYAN}requests${NC}, ${CYAN}rich${NC}, ${CYAN}inquirer${NC} and ${CYAN}tqdm${NC}... "
+
+        if ! pip3 install requests rich inquirer tqdm --break-system-packages > /dev/null 2>&1; then
+            echo -e "${RED}Error${NC}.\n"
+            continue
+        fi
+
+        echo -e "${GREEN}Done${NC}."
+
+        sleep 3
+        CURRENT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        cd "$SCRIPT_DIR/scripts/Lucid_DDoS/"
+
+        function start_lucid() {
+            python3 main.py
+        }
+
+        trap start_lucid SIGINT EXIT
+        cd "$CURRENT_PATH"
         continue
     fi
 
@@ -384,5 +414,3 @@ while true; do
 
     echo -e "${RED}ERROR${NC} Invalid command: '$userInput'."
 done
-
-close
