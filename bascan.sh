@@ -151,10 +151,6 @@ while true; do
 
     echo ""
 
-    if [[ "$lowerUserInput" == "restart" ]]; then
-        close "1"
-    fi
-
     if [[ "$lowerUserInput" == "vuln" ]]; then
         for ((index=0;index<"${#vulnerabilities[@]}";index++)); do
             if [[ "${vulnerabilities_level[$index]}" == 0 ]]; then
@@ -367,6 +363,17 @@ while true; do
         echo "    set <option> <value> - set an option value"
         echo "    show - show options"
         echo ""
+        continue
+    fi
+
+    if [[ "$lowerUserInput" == "help" ]]; then
+        echo -e "Commands:
+   install : Install packages and tools.
+   scan    : Run scan on host.
+   kill    : Interrupt the bascan process.
+   option  : Manage scanning and preferences options.
+   help    : Show this message.
+        "
         continue
     fi
 
