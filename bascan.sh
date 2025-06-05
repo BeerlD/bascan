@@ -62,7 +62,7 @@ done
 unset -f help_message
 
 if [ ! -n "$HOST" ]; then
-    echo -e "\e[31m[-]\e[0m No host was specified."
+    echo -e "\e[31m[-]\e[0m No host was specified (use --help to learn more)."
     exit 0
 fi
 
