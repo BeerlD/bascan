@@ -70,8 +70,6 @@ source "$SCRIPT_DIR/modules/cache.sh"
 source "$SCRIPT_DIR/INCLUDE.sh"
 source "$SCRIPT_DIR/tools/INCLUDE.sh"
 
-chmod +x scripts/pidstat.sh
-
 # ======== HEADER
 enter_alt_screen
 trap 'stty echo icanon; tput cnorm; exit' INT TERM
