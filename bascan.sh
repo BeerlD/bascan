@@ -372,6 +372,7 @@ while true; do
    scan    : Run scan on host.
    kill    : Interrupt the bascan process.
    option  : Manage scanning and preferences options.
+   vuln    : Show vulnerabilities found after a scan.
    help    : Show this message.
         "
         continue
