@@ -38,7 +38,7 @@ if [ ! -f source.tar.gz ]; then
 fi
 
 INSTALL_DIR="/usr/local/bin/bascan_source"
-rm -rf "$INSTALL_DIR"
+sudo rm -rf "$INSTALL_DIR"
 
 echo -e "${YELLOW}[+]${NC} Extracting to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
@@ -49,4 +49,4 @@ chmod +x "$SCRIPT"
 ln -sf "$SCRIPT" /usr/local/bin/bascan
 
 echo -e "${YELLOW}[+]${NC} Bascan has been successfully installed to $INSTALL_DIR."
-rm -rf "$TMP_DIR"
+sudo rm -rf "$TMP_DIR"
