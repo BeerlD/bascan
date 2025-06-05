@@ -117,7 +117,7 @@ function nmap_perform_result() {
             fi
 
             nmap "${scan_params[@]}" -Pn "$HOST" &> "$1" &
-            ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
+            "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" &> /dev/null &
             utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage "$1" "$outputfile"
             status=1
             break
@@ -213,7 +213,7 @@ function nmap_scan_mode() {
     esac
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
-    ././scripts/pidstat.sh $! "bascan_nmap_pidstat.log" &> /dev/null &
+    "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
 
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do
