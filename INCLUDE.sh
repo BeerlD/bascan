@@ -2,7 +2,6 @@ source "$SCRIPT_DIR/lib/colors.sh"
 source "$SCRIPT_DIR/modules/cache.sh"
 source "$SCRIPT_DIR/modules/utils.sh"
 
-export HOST=$1
 export ports_scanned=()
 export vulnerabilities=()
 export vulnerabilities_level=()
@@ -10,7 +9,7 @@ export vulnerabilities_level=()
 declare -g ports_scanned
 declare -g vulnerabilities
 declare -g vulnerabilities_level
-declare -g HOST
+
 
 function addVulnerability() {
     # $1 -> message
