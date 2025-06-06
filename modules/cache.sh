@@ -20,16 +20,9 @@ cache_folder_create() {
     main_folder="bascan_$(date +%Y-%m-%d_%H:%M:%S)"
     mkdir -p "$main_folder/$tools_cache_folder"
 
-    cat > bascan_configs.sh <<EOF
-main_folder="$main_folder" # Folder of logs
-tools_cache_folder="$tools_cache_folder"
-intensity="normal"
-multitrhead=false
-fastmode=false
-new_cache_folder=false
-EOF
+    echo "main_folder=\"$main_folder\"" > bascan_configs.sh
+    echo "tools_cache_folder=\"$tools_cache_folder\"" >> bascan_configs.sh
 }
-
 
 function cache_tools_file_create() {
     # $1 -> folder name
@@ -71,10 +64,22 @@ function cache_tools_file_getPath() {
 }
 
 function cache_config_file_setValue() {
-    # $1 -> line number
-    # $2 -> new value (passar aspas se quiser)
+    # $1 -> variable name
+    # $2 -> new value
+    # [optional] $3 -> create if not exists and not set if exists
 
     cache_folder_create
     cp "bascan_configs.sh" "bascan_configs.sh.bak"
-    sed -i "$1s/\([^=]*\)=.*/\1=$2/" "bascan_configs.sh"
+
+    if grep -q "^$1=" "bascan_configs.sh" && [[ "$3" != true ]]; then
+        sed -i "s/^$1=.*/$1=$2/" "bascan_configs.sh"
+        return 0
+    fi
+    
+    if ! grep -q "^$1=" "bascan_configs.sh" && [[ "$3" == true ]]; then
+        printf "%s=%s\n" "$1" "$2" >> "bascan_configs.sh"
+        return 0
+    fi
+
+    return 1
 }
