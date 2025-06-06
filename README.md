@@ -61,6 +61,12 @@ make build
 bascan update
 ```
 
+<p style="color: red;">OR</p>
+
+```sh
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
+```
+
 ## Usage
 
 ```sh
