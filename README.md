@@ -23,7 +23,7 @@ A tool for retrieving registration information of domains and IP addresses. Disp
 | OS                     | Support                 |
 | :--------------------- | :---------------------: |
 | Kali-Linux             | :white_check_mark:      |
-| Ubunut 24.04.2 LTS     | :white_check_mark:      |
+| Ubuntu 24.04.2 LTS     | :white_check_mark:      |
 
 ```sh
 sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/heads/main/install.sh)"
