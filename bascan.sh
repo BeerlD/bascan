@@ -8,10 +8,6 @@ fi
 declare -g HOST
 HOST=""
 
-#!/bin/bash
-
-HOST=""
-
 function help_message() {
     echo "
 Bascan (https://github.com/BeerlD/bascan)
@@ -120,16 +116,30 @@ source "$SCRIPT_DIR/modules/cache.sh"
 source "$SCRIPT_DIR/INCLUDE.sh"
 source "$SCRIPT_DIR/tools/INCLUDE.sh"
 
+HISTORY_FILE="/tmp/bascan_history.$$"
+
 # ======== HEADER
 enter_alt_screen
 trap 'stty echo icanon; tput cnorm; exit' INT TERM
 echo -e "${RED}$(toilet -f big BASCAN)${NC}"
 
+cache_config_file_setValue "intensity" "\"normal\"" true
+cache_config_file_setValue "multitrhead" false true
+cache_config_file_setValue "fastmode" false true
+cache_config_file_setValue "new_cache_folder" false true
+cache_config_file_setValue "geminiToken" "\"\"" true
+
+touch "$HISTORY_FILE" &> /dev/null
+
 while true; do
     stty echo icanon
     tput cnorm
-    read -p "$(echo -e "${BLUE}>${NC} ")" userInput
-    userInput=$(echo "$userInput" | tr -cd '[:alnum:] ')
+    
+    history -r "$HISTORY_FILE"
+    read -e -p "$(echo -e "${BLUE}>${NC} ")" userInput
+    echo "$userInput" >> "$HISTORY_FILE"
+    history -s "$userInput"
+
     stty -echo -icanon
     tput civis
 
@@ -199,7 +209,9 @@ while true; do
            echo -e "${RED}ERROR${NC} Invalid scan operation: '${userInput:5}'."
         fi
         
+        echo -e "• Scan host vulnerabilities."
         echo -e "• Usage ${BLUE}─>${NC} scan <operation>"
+        echo "${BLUE}╰─>${NC} all ${BLUE}─>${NC} Scan with all operations."
         echo "${BLUE}╰─>${NC} network      ${BLUE}─>${NC} Scan network vulnerabilities."
         echo "${BLUE}╰─>${NC} informations ${BLUE}─>${NC} Scan public informations."
         echo ""
@@ -255,6 +267,7 @@ while true; do
            echo -e "${RED}ERROR${NC} Invalid package: '${userInput:8}'."
         fi
 
+        echo -e "• Install tools and packages."
         echo -e "• Usage ${BLUE}─>${NC} install <package>"
         echo "${BLUE}╰─>${NC} all   ${BLUE}─>${NC} Install all packages."
         echo "${BLUE}╰─>${NC} nmap  ${BLUE}─>${NC} Network scanner, identifier of active hosts, open ports, services and operating systems."
@@ -267,7 +280,7 @@ while true; do
         if [[ "${#userInput}" -ge 7 ]]; then
             if [[ "${lowerUserInput:7}" =~ ^set ]]; then
                 if [[ "${#userInput}" -ge 11 ]]; then
-                    option="${lowerUserInput:11}"
+                    option="${userInput:11}"
 
                     if [[ "$option" =~ ^intensity ]]; then
                         if [[ "$option" != "intensity" ]]; then
@@ -285,7 +298,7 @@ while true; do
                             if [[ "$match" == false ]]; then
                                 echo -e "${RED}ERROR${NC} Invalid option value: '$value'."
                             else
-                                cache_config_file_setValue 3 "\"$value\""
+                                cache_config_file_setValue "intensity" "\"$value\""
                                 echo -e "${GREEN}SETTED${NC} option intensity setted to: '$value'."
                                 echo ""
                                 continue
@@ -296,7 +309,7 @@ while true; do
                             value="${option:12}"
 
                             if [[ "$value" == "true" || "$value" == "false" ]]; then
-                                cache_config_file_setValue 4 "$value"
+                                cache_config_file_setValue "multithread" "$value"
                                 echo -e "${GREEN}SETTED${NC} option multithread setted to: '$value'."
                                 echo ""
                                 continue
@@ -307,7 +320,7 @@ while true; do
                             value="${option:9}"
 
                             if [[ "$value" == "true" || "$value" == "false" ]]; then
-                                cache_config_file_setValue 5 "$value"
+                                cache_config_file_setValue "fastmode" "$value"
                                 echo -e "${GREEN}SETTED${NC} option fastmode setted to: '$value'."
                                 echo ""
                                 continue
@@ -318,11 +331,19 @@ while true; do
                             value="${option:17}"
 
                             if [[ "$value" == "true" || "$value" == "false" ]]; then
-                                cache_config_file_setValue 6 "$value"
+                                cache_config_file_setValue "new_cache_folder" "$value"
                                 echo -e "${GREEN}SETTED${NC} option new_cache_folder setted to: '$value'."
                                 echo ""
                                 continue
                             fi
+                        fi
+                    elif [[ "$option" =~ ^geminiToken ]]; then
+                        if [[ "$option" != "geminiToken" ]]; then
+                            value="${option:12}"
+                            cache_config_file_setValue "geminiToken" "\"$value\""
+                            echo -e "${GREEN}SETTED${NC} option geminiToken setted to: '$(printf '%*s' "${#value}" '' | tr ' ' '*')'."
+                            echo ""
+                            continue
                         fi
                     else
                         echo -e "${RED}ERROR${NC} Invalid option: '$option'."
@@ -330,7 +351,8 @@ while true; do
                         continue
                     fi
                 fi
-
+ 
+                echo -e "• Manage preferences and scan options."
                 echo -e "• Usage ${BLUE}─>${NC} option set <option> <value>"
                 echo "${BLUE}╰─>${NC} • Options:"
                 echo "    ${BLUE}╰─>${NC} • intensity <value>"
@@ -364,6 +386,87 @@ while true; do
         continue
     fi
 
+    if [[ "$lowerUserInput" == "ia" || "$lowerUserInput" =~ ^ia\  ]]; then
+        if [[ "$lowerUserInput" != "ia" ]]; then
+            if [ "${#vulnerabilities[@]}" -eq 0 ]; then
+                echo -e "${RED}ERROR${NC}: Do at least one scan (use 'scan' command).\n"
+                continue
+            fi
+
+            iaName="${lowerUserInput:3}"
+
+            if [[ "$iaName" =~ ^gemini\  || "$iaName" == "gemini" ]]; then
+                if [[ "$iaName" == "gemini" ]]; then
+                    echo -e "${RED}ERROR${NC}: Result type not specified.\n"
+                else
+                    resultType="${iaName:7}"
+
+                    if [[ "$resultType" != "all" && "$resultType" != "network" && "$resultType" != "informations" ]]; then
+                        echo -e "${RED}ERROR${NC}: Invalid IA result type: '$resultType'.\n"
+                    else
+                        if ! command -v python3 &> /dev/null; then
+                            echo -ne "${YELLOW}[+]${NC} Installing ${CYAN}python3${NC} and ${CYAN}python3-pip${NC}... "
+
+                            if ! sudo apt install -y python3 python3-pip; then
+                                echo -e "${RED}ERROR${NC}."
+                                continue
+                            fi
+
+                            echo -e "${GREEN}Done${NC}."
+                        fi
+
+                        if ! python3 -c "from setuptools import setup; print('OK')" &> /dev/null; then
+                            echo -ne "${YELLOW}[+]${NC} Reinstalling ${CYAN}setuptools${NC}... "
+                            pip3 install --force-reinstall setuptools --break-system-packages &> /dev/null
+                            echo -e "${GREEN}Done${NC}."
+                        fi
+
+                        if ! python3 -c "import google.generativeai" &> /dev/null; then
+                            echo -ne "${YELLOW}[+]${NC} Installing pip package ${CYAN}google-generativeai${NC}... "
+
+                            if ! pip3 install google-generativeai --break-system-packages &> /dev/null; then
+                                echo -e "${RED}ERROR${NC}."
+                                continue
+                            fi
+
+                            echo -e "${GREEN}Done${NC}."
+                        fi
+
+                        source ./bascan_configs.sh
+                        outputFile="$(date +%Y%m%d%H%M%S)_gemini_python.log"
+                        msg=$(printf "%s\n" "${vulnerabilities[@]}")
+                        python3 "$SCRIPT_DIR/modules/IA/gemini.py" \
+                            --message "$msg" \
+                            --geminiToken "$geminiToken" \
+                            > "$outputFile" 2>&1 &
+
+                        PROCESS_PID=$!
+
+                        "$SCRIPT_DIR/scripts/pidstat.sh" "$PROCESS_PID" "bascan_gemini_pidstat.log" &> /dev/null &
+                        utils_message_loading_pid "$PROCESS_PID" "${YELLOW}[+]${NC} Starting ${CYAN}Gemini${NC} analysis... "
+                        echo -e "${GREEN}Done${NC}.\n"
+                        echo "${YELLOW}[+]${NC} See the result in the ${ORANGE}$outputFile${NC} file."
+                        echo ""
+                        continue
+                    fi
+                fi
+            else
+                echo -e "${RED}ERROR${NC}: Invalid IA name: '$iaName'.\n"
+            fi
+        fi
+
+        echo -e "• Use AI to analyze scan results.
+• Usage ${BLUE}─>${NC} ia <name> <result type>:
+${BLUE}╰─>${NC} • Names 
+    ${BLUE}╰─>${NC} gemini ${BLUE}─>${NC} Gemini AI, developed by Google DeepMind.
+${BLUE}╰─>${NC} • Result types
+    ${BLUE}╰─>${NC} all ${BLUE}─>${NC} all results.
+    ${BLUE}╰─>${NC} network ${BLUE}─>${NC} Network results.
+    ${BLUE}╰─>${NC} informations ${BLUE}─>${NC} Informations of host results.
+        "
+        continue
+    fi
+
     if [[ "$lowerUserInput" == "help" ]]; then
         echo -e "• Commands:
 ${BLUE}╰─>${NC} install ${BLUE}─>${NC} Install packages and tools.
@@ -371,9 +474,10 @@ ${BLUE}╰─>${NC} scan    ${BLUE}─>${NC} Run scan on host.
 ${BLUE}╰─>${NC} kill    ${BLUE}─>${NC} Interrupt the bascan process.
 ${BLUE}╰─>${NC} option  ${BLUE}─>${NC} Manage scanning and preferences options.
 ${BLUE}╰─>${NC} vuln    ${BLUE}─>${NC} Show vulnerabilities found after a scan.
-${BLUE}╰─>${NC} lucid   ${BLUE}─>${NC} Run the Lucid DDos attack script (you are responsible for its use).
 ${BLUE}╰─>${NC} help    ${BLUE}─>${NC} Show this message.
         "
+
+        #${BLUE}╰─>${NC} lucid   ${BLUE}─>${NC} Run the Lucid DDos attack script (you are responsible for its use).
         continue
     fi
 
@@ -397,14 +501,16 @@ ${BLUE}╰─>${NC} help    ${BLUE}─>${NC} Show this message.
 
         sleep 3
         CURRENT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        cd "$SCRIPT_DIR/scripts/Lucid_DDoS/"
-
+        
         function start_lucid() {
-            python3 main.py
+            cd "$SCRIPT_DIR/scripts/Lucid_DDoS/" && python3 main.py
         }
 
+        exit_alt_screen
         trap start_lucid SIGINT EXIT
+        
         cd "$CURRENT_PATH"
+        enter_alt_screen
         continue
     fi
 
