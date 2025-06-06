@@ -58,7 +58,7 @@ make build
 ### Updating
 
 ```sh
-bascan update
+sudo bascan update
 ```
 
 <p style="color: red;">OR</p>
@@ -71,9 +71,9 @@ sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/BeerlD/bascan/refs/h
 
 ```sh
 # Examples
-bascan host.com        # Example 1
-bascan -h host.com     # Example 2
-bascan --host host.com # Example 3
+sudo bascan host.com        # Example 1
+sudo bascan -h host.com     # Example 2
+sudo bascan --host host.com # Example 3
 ```
 
 ## Author
