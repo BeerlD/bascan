@@ -1,4 +1,4 @@
-source "$SCRIPT_DIR/INCLUDE.sh"
+source "$SCRIPT_DIR/_INCLUDE.sh"
 
 function dig_perform_result() {
     local file_path="$1"
@@ -67,7 +67,7 @@ function start_dig_scan() {
         local cache_file_path=$(cache_tools_file_getPath "dig" "$filename")
 
         dig "$HOST" "$type" +noall +answer &> "$cache_file_path" &
-        "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_dig_pidstat_${type}.log" &> /dev/null &
+        sudo "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_dig_pidstat_${type}.log" "$SCRIPT_DIR" &> /dev/null &
         utils_message_loading_pid $! "  ${ORANGE}DNS ($type)${NC}..."
 
         local found=0

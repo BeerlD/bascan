@@ -16,9 +16,9 @@ utils_message_loading_pid() {
             func=$3
 
             if [[ -n "$outputfile" ]]; then
-                echo -ne "\r$2 [${chars[$charIndex]}] $($func "$1" "$4")$(tput el)" > "$outputfile"
+                echo -ne "\r$2 [${chars[$charIndex]}] $($func $1 "$4")$(tput el)" > "$outputfile"
             else
-                echo -ne "\r$2 [${chars[$charIndex]}] $($func "$1" "$4")$(tput el)"
+                echo -ne "\r$2 [${chars[$charIndex]}] $($func $1 "$4")$(tput el)"
             fi
         else
             if [[ -n "$outputfile" ]]; then

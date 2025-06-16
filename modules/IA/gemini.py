@@ -21,7 +21,7 @@ class ArgParseExtended(argparse.ArgumentParser):
         
         sys.exit(2)
 
-parser = ArgParseExtended(description="Gemini Pro IA Chat")
+parser = ArgParseExtended(description="Gemini 2.0 Flash IA Chat")
 parser.add_argument("--message", required=True, help="Message will be send.")
 parser.add_argument("--geminiToken", required=True, help="IA access token.")
 args = parser.parse_args()

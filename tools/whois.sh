@@ -1,4 +1,4 @@
-source "$SCRIPT_DIR/INCLUDE.sh"
+source "$SCRIPT_DIR/_INCLUDE.sh"
 
 function whois_perform_result() {
     local file_path="$1"
@@ -63,7 +63,7 @@ function run_whois_mode() {
     local cache_file_path=$(cache_tools_file_getPath "whois" "$mode_name.log")
 
     whois $whois_args "$HOST" &> "$cache_file_path" &
-    "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_whois_pidstat.log" &> /dev/null &
+    sudo "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_whois_pidstat.log" "$SCRIPT_DIR" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}Domain Info (${mode_name})${NC}..."
 
     if grep -qEi 'No whois server is known for this kind of object|No match for|NOT FOUND|No entries found|Object does not exist|Status: free|Domain Status: available|No Data Found' "$cache_file_path"; then

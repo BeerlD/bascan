@@ -1,4 +1,4 @@
-source "$SCRIPT_DIR/INCLUDE.sh"
+source "$SCRIPT_DIR/_INCLUDE.sh"
 
 function setScanParams() {
     # $1 -> var out 
@@ -29,11 +29,15 @@ function nmap_getCPUNetworkUsage() {
     # $1 -> PID
     # $2 -> cache file path
 
+    echo -ne "$(head -n 1 bascan_nmap_pidstat.log.bak 2>/dev/null) "
+
     local progress=$(grep -oE "[0-9]+\.[0-9]+%" "$2" | tail -n 1 | sed -E 's/.* ([0-9]+\.[0-9]+)%.*/\1/')
     local remaining=$(grep -oP '\(\K[^)]+' "$2" | tail -n 1)
 
     if [[ -n "$progress" ]]; then
         echo -e "${CYAN}$progress${NC} done ($remaining)."
+    else
+        echo ""
     fi
 }
 
@@ -117,7 +121,7 @@ function nmap_perform_result() {
             fi
 
             nmap "${scan_params[@]}" -Pn "$HOST" &> "$1" &
-            "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" &> /dev/null &
+            sudo "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" "$SCRIPT_DIR" &> /dev/null &
             utils_message_loading_pid $! "  ${ORANGE}$2${NC} (without verification ping)..." nmap_getCPUNetworkUsage "$1" "$outputfile"
             status=1
             break
@@ -213,7 +217,7 @@ function nmap_scan_mode() {
     esac
 
     nmap "${scan_params[@]}" "$HOST" &> "$cache_file_path" &
-    "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" &> /dev/null &
+    sudo "$SCRIPT_DIR/scripts/pidstat.sh" $! "bascan_nmap_pidstat.log" "$SCRIPT_DIR" &> /dev/null &
     utils_message_loading_pid $! "  ${ORANGE}$title${NC}..." nmap_getCPUNetworkUsage "$cache_file_path" "$outputfile"
 
     while nmap_perform_result "$cache_file_path" "$title" "$outputfile"; do

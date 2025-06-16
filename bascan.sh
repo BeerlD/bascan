@@ -62,10 +62,14 @@ if [ ! -n "$HOST" ]; then
     exit 0
 fi
 
-if ! command -v toilet >/dev/null 2>&1 || ! command -v figlet >/dev/null 2>&1; then 
-    echo -ne "\e[33m[+]\e[0m Installing packages: \e[36mtoilet\e[0m and \e[36mfiglet\e[0m... "
+if 
+    ! command -v toilet >/dev/null 2>&1 \
+    || ! command -v figlet >/dev/null 2>&1 \
+    || ! command -v bpftrace >/dev/null 2>&1;
+then 
+    echo -ne "\e[33m[+]\e[0m Installing packages: \e[36mtoilet\e[0m, \e[36mfiglet\e[0m and \e[36mbpftrace\e[0m... "
 
-    if ! sudo apt install -y toilet toilet-fonts figlet >/dev/null 2>&1; then
+    if ! sudo apt install -y toilet toilet-fonts figlet bpftrace >/dev/null 2>&1; then
         echo -e "\e[31mError\e[0m."
         exit 0
     fi
@@ -113,8 +117,8 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
 
 source "$SCRIPT_DIR/lib/colors.sh"
 source "$SCRIPT_DIR/modules/cache.sh"
-source "$SCRIPT_DIR/INCLUDE.sh"
-source "$SCRIPT_DIR/tools/INCLUDE.sh"
+source "$SCRIPT_DIR/_INCLUDE.sh"
+source "$SCRIPT_DIR/tools/_INCLUDE.sh"
 
 HISTORY_FILE="/tmp/bascan_history.$$"
 
@@ -442,7 +446,7 @@ while true; do
 
                         PROCESS_PID=$!
 
-                        "$SCRIPT_DIR/scripts/pidstat.sh" "$PROCESS_PID" "bascan_gemini_pidstat.log" &> /dev/null &
+                        sudo "$SCRIPT_DIR/scripts/pidstat.sh" "$PROCESS_PID" "bascan_gemini_pidstat.log" "$SCRIPT_DIR" &> /dev/null &
                         utils_message_loading_pid "$PROCESS_PID" "${YELLOW}[+]${NC} Starting ${CYAN}Gemini${NC} analysis... "
                         echo -e "${GREEN}Done${NC}.\n"
                         echo "${YELLOW}[+]${NC} See the result in the ${ORANGE}$outputFile${NC} file."
